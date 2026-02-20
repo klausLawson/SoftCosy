@@ -56,11 +56,12 @@ class StockMovement(models.Model):
 
 
 class Alert(models.Model):
-    """Alert model for stock and sales monitoring (Alertes)"""
+    """Alert model for stock, sales monitoring and system events (Alertes)"""
 
     ALERT_TYPE_CHOICES = (
         ("stock_bas", "Stock Bas"),
         ("vente_anormale", "Vente Anormale"),
+        ("audit_purge_warning", "Avertissement purge journal d'audit"),   # ← NOUVEAU TYPE
     )
 
     SEVERITY_CHOICES = (
@@ -70,7 +71,16 @@ class Alert(models.Model):
     )
 
     id = models.AutoField(primary_key=True)
-    stock = models.ForeignKey("stockmouvement.Stock", on_delete=models.CASCADE, related_name="alerts")
+    
+    # Rendre stock complètement optionnel (null=True, blank=True déjà présents)
+    stock = models.ForeignKey(
+        "stockmouvement.Stock",
+        on_delete=models.CASCADE,
+        related_name="alerts",
+        null=True,
+        blank=True,                # ← déjà OK
+    )
+    
     type = models.CharField(max_length=50, choices=ALERT_TYPE_CHOICES)
     severite = models.CharField(max_length=20, choices=SEVERITY_CHOICES)
     message = models.TextField()
@@ -80,7 +90,14 @@ class Alert(models.Model):
     estResolue = models.BooleanField(default=False)
     dateResolution = models.DateField(null=True, blank=True)
     created_or_updated_at = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="alerts")
+    
+    user = models.ForeignKey(
+        "user.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="alerts"
+    )
 
     class Meta:
         db_table = "alert"
@@ -89,4 +106,4 @@ class Alert(models.Model):
         ordering = ["-dateAlerte"]
 
     def __str__(self):
-        return f"Alert: {self.titre} ({self.severite})"
+        return f"Alert: {self.titre} ({self.severite}) - {self.type}"

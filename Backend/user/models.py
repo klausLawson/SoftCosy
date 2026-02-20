@@ -31,52 +31,48 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Custom User model"""
-    
+    """Custom User model avec username unique et email comme identifiant principal"""
+
     ROLE_CHOICES = (
         ('ADMIN', 'Administrator'),
         ('SELLER', 'Seller'),
         ('MANAGER', 'Manager'),
     )
-    
+
     id = models.AutoField(primary_key=True)
+    username = models.CharField(max_length=30, unique=True, null=True, blank=True, help_text="Nom d'utilisateur unique (optionnel)")
     email = models.EmailField(max_length=50, unique=True)
     # password field is inherited from AbstractBaseUser
     full_name = models.CharField(max_length=50)
     phone = models.IntegerField(null=True, blank=True)
     address = models.TextField(null=True, blank=True)
     role = models.CharField(
-        max_length=20, 
-        choices=ROLE_CHOICES, 
+        max_length=20,
+        choices=ROLE_CHOICES,
         default='SELLER'
     )
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateField(auto_now_add=True)
-    
+
     # Relationships (reverse relations will be handled by Sale, InventoryCount, Purchase, AuditLog, StockMovement models)
-    # saleList: Reverse relation from Sale model
-    # inventoryCountList: Reverse relation from InventoryCount model
-    # purchaseList: Reverse relation from Purchase model
-    # auditLogList: Reverse relation from AuditLog model
-    # stockMovement: Reverse relation from StockMovement model
-    
+
     objects = UserManager()
-    
+
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['full_name']
-    
+    REQUIRED_FIELDS = ['full_name', 'username']
+
     class Meta:
         db_table = 'user'
         verbose_name = 'User'
         verbose_name_plural = 'Users'
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f'{self.full_name} ({self.email})'
-    
+
     def get_full_name(self):
         return self.full_name
-    
+
     def get_short_name(self):
         return self.full_name.split()[0] if self.full_name else ''

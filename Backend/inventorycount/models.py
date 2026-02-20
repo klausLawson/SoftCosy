@@ -4,7 +4,7 @@ from django.utils import timezone
 
 class InventoryCount(models.Model):
 	"""Model for inventory counts (inventaires)"""
-
+ 
 	STATUS_CHOICES = (
 		("ENCOURS", "En cours"),
 		("FINI", "Fini"),

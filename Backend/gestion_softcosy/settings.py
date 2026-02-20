@@ -1,3 +1,8 @@
+# Backend d'authentification par email
+AUTHENTICATION_BACKENDS = [
+    'user.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 """
 Django settings for gestion_softcosy project.
 
@@ -37,7 +42,7 @@ INSTALLED_APPS = [
     'inventorycount',
     'sale',
     'purchase',
-    'audit',
+    'audit.apps.AuditConfig',
     'stockmouvement',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -46,12 +51,42 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
+    'axes',  # Ajout pour le verrouillage après tentatives échouées
 ]
+
+# Configuration django-axes : verrouillage après 3 tentatives échouées
+AXES_FAILURE_LIMIT = 3
+AXES_COOLOFF_TIME = 0.09  # 5 minutes de verrouillage
+AXES_LOCKOUT_TEMPLATE = None  # Utilise la réponse JSON par défaut pour API
+
 
 # Use custom user model
 AUTH_USER_MODEL = 'user.User'
 
+# Authentification REST
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  # utile pour le browsable API
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+# Optionnel : mot de passe plus sécurisé (Argon2 recommandé en 2026)
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.ScryptPasswordHasher',
+]
+
+
 MIDDLEWARE = [
+    'axes.middleware.AxesMiddleware',  # Ajout du middleware Axes
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -117,7 +152,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
