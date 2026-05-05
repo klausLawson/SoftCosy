@@ -3,6 +3,7 @@ services:
   - type: web
     name: softcosy-backend
     runtime: python
+    plan: free
     rootDir: Backend
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
     preDeployCommand: python manage.py migrate
@@ -19,6 +20,7 @@ services:
   - type: web
     name: softcosy-frontend
     runtime: node
+    plan: free
     rootDir: Frontend
     buildCommand: npm install && npm run build
     startCommand: npm run start
