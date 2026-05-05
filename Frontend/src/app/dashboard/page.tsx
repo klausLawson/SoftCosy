@@ -13,23 +13,16 @@ import {
   Cell,
 } from 'recharts'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import {
   TrendingUp,
   AlertTriangle,
   Package,
   BarChart3,
-  Download,
-  TrendingDown,
   History,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { useAuth } from '@/components/AuthContext'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale/fr'
 
 // ────────────────────────────────────────────────
 // Types pour les données réelles
@@ -61,13 +54,10 @@ interface ProductPerf {
 interface RecentData {
   low_stock: Array<{ id: number; titre: string; message: string; severite: string }>
   movements: Array<{ id: number; product_name: string; type: string; qty: number; date_val: string }>
-  audit_logs: Array<{ id: number; action: string; enitity: string; perform_at: string; user_name: string }>
 }
 
 export default function DashboardV2() {
   const { user } = useAuth()
-  const router = useRouter()
-  const [auditPeriod, setAuditPeriod] = useState<'day' | 'week'>('day')
 
   // Récupération des données
   const { data: summary } = useQuery<DashboardSummary>({
@@ -101,13 +91,6 @@ export default function DashboardV2() {
     { label: 'Alertes Actives', value: summary?.active_alerts || 0, icon: AlertTriangle, color: 'text-orange-500' },
     { label: 'Ventes (Total)', value: `${(summary?.total_sales_amount || 0).toLocaleString()} FCFA`, icon: BarChart3, color: 'text-purple-500' },
   ]
-
-  const handleExportAudit = () => {
-    // Placeholder pour l'export, on peut lier à une action backend plus tard
-    console.log('Exporting audit...')
-  }
-
-  // On ne bloque plus l'affichage
 
   return (
     <div className="flex flex-col h-full text-foreground">
@@ -158,7 +141,7 @@ export default function DashboardV2() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" vertical={false} />
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                       itemStyle={{ fontSize: '12px' }}
                     />
@@ -250,72 +233,6 @@ export default function DashboardV2() {
               </div>
             </Card>
           </div>
-
-          {/* Audit Logs Table */}
-          <Card className="p-6 border border-border bg-card shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <History className="w-5 h-5 text-primary" />
-                Journal d'Audit Réel
-              </h3>
-              <div className="flex items-center gap-2">
-                <select 
-                  value={auditPeriod}
-                  onChange={(e) => setAuditPeriod(e.target.value as any)}
-                  className="bg-muted text-xs border-border rounded px-2 py-1 outline-none"
-                >
-                  <option value="day">Aujourd'hui</option>
-                  <option value="week">Cette semaine</option>
-                </select>
-                <Button size="sm" variant="outline" className="text-xs" onClick={handleExportAudit}>
-                  <Download className="w-3 h-3 mr-1" /> PDF
-                </Button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="pb-3 pr-4 font-medium uppercase text-[10px]">Date</th>
-                    <th className="pb-3 pr-4 font-medium uppercase text-[10px]">Utilisateur</th>
-                    <th className="pb-3 pr-4 font-medium uppercase text-[10px]">Action</th>
-                    <th className="pb-3 pr-4 font-medium uppercase text-[10px]">Module</th>
-                    <th className="pb-3 font-medium uppercase text-[10px] text-right">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {recentData?.audit_logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="py-3 text-xs pr-4">{format(new Date(log.perform_at), 'dd/MM HH:mm', { locale: fr })}</td>
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px]">
-                            {log.user_name ? log.user_name[0].toUpperCase() : 'S'}
-                          </div>
-                          {log.user_name || 'Système'}
-                        </div>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-medium border ${
-                          log.action === 'create' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 
-                          log.action === 'update' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 
-                          'bg-red-500/10 text-red-500 border-red-500/20'
-                        }`}>
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-muted-foreground">{log.enitity}</td>
-                      <td className="py-3 text-right">
-                        <span className="text-green-500 text-[10px] font-bold">● Succès</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {!recentData?.audit_logs.length && <p className="text-center text-muted-foreground py-10 text-sm">Aucun log d'audit</p>}
-            </div>
-          </Card>
       </main>
     </div>
   )

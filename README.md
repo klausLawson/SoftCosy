@@ -1,214 +1,123 @@
-# 🏪 Sports Inventory Management System
+# SoftCosy — Système de Gestion de Commerce
 
-Application **Web et Mobile** permettant la gestion complète de l’inventaire d’un commerce d’articles sportifs  
-(maillots, chaussures, accessoires).
-
----
-
-## 📌 Présentation du Projet
-
-Ce projet vise à fournir une solution moderne et centralisée pour :
-- Gérer les produits et leurs variantes (tailles, couleurs, modèles)
-- Suivre les stocks en temps réel
-- Assurer la traçabilité des mouvements de stock
-- Faciliter la prise de décision grâce à des tableaux de bord et indicateurs clés
+Application web complète de gestion de stock, ventes et caisse pour commerces de détail.
+Développée par **[Virkas](https://wa.me/+22893953658)**.
 
 ---
 
-## 🎯 Objectifs
+## Stack Technique
 
-- Réduire les erreurs liées à la gestion manuelle des stocks
-- Anticiper les ruptures de stock
-- Améliorer la visibilité sur la rotation des produits
-- Offrir une expérience utilisateur simple, rapide et sécurisée
-
----
-
-## 👥 Utilisateurs Cibles
-
-- **Administrateur** : gestion globale du système
-- **Responsable de stock** : gestion des produits, variantes et mouvements
-- **Vendeur / Employé** : consultation des stocks et sorties rapides
+| Couche | Technologie |
+|---|---|
+| Frontend | Next.js 16 · React 19 · TypeScript · Tailwind CSS |
+| Backend | Django 5 · Django REST Framework · Python |
+| Base de données | PostgreSQL (Supabase) |
+| Authentification | Token-based (DRF) · Email/Password |
+| Déploiement | Render (backend + frontend) |
 
 ---
 
-## 🧩 Fonctionnalités Principales
+## Fonctionnalités
 
 ### Gestion des Produits
-- Création, modification et suppression de produits
-- Gestion des catégories sportives
-- Images et descriptions détaillées
-
-### Gestion des Variantes
-- Tailles, couleurs, modèles
-- SKU unique par variante
-- Stock par variante
+- Création / modification / suppression de produits avec variantes (taille, SKU, prix)
+- Gestion des catégories
+- Upload d'images produit
 
 ### Gestion des Stocks
-- Entrées de stock (achat, retour)
-- Sorties de stock (vente, perte)
-- Ajustements manuels
-- Historique complet et journal d’audit
+- Entrées, sorties, ajustements de stock par variante
+- Alertes dynamiques : stock faible et rupture (sans stockage en base)
+- Seuils configurables depuis les paramètres
 
-### Alertes & Notifications
-- Seuil minimum de stock
-- Alertes de rupture imminente
+### Caisse (Point de Vente)
+- Interface dédiée vendeur
+- Panier, calcul automatique, paiement et reçu
+- Filtre : seuls les produits avec un prix sont affichés
 
 ### Dashboard & Reporting
-- Vue globale de l’inventaire
-- Produits à forte / faible rotation
-- Indicateurs de performance
+- Statistiques en temps réel (CA, stock, alertes actives)
+- Graphiques : mouvements sur 6 mois, répartition par catégorie
+- Top produits par rotation
+
+### Utilisateurs & Sécurité
+- Rôles : ADMIN · MANAGER · SELLER
+- Blocage automatique après 3 tentatives de connexion (django-axes)
+- Création automatique d'un admin de secours au démarrage (via variables d'environnement)
 
 ---
 
-## 🏗️ Architecture Technique
+## Variables d'Environnement
 
-- Architecture **Client / Serveur**
-- API centralisée (REST ou GraphQL)
-- Séparation Frontend / Backend
-- Architecture modulaire et évolutive
+### Backend (`.env`)
+```env
+SECRET_KEY=...
+DEBUG=False
+ALLOWED_HOSTS=votre-backend.onrender.com,localhost
+
+DB_NAME=...
+DB_USER=...
+DB_PASSWORD=...
+DB_HOST=...
+DB_PORT=5432
+
+# Admin de secours (créé automatiquement si aucun superuser n'existe)
+DEFAULT_ADMIN_EMAIL=admin@softcosy.com
+DEFAULT_ADMIN_PASSWORD=MotDePasseSecurise!
+DEFAULT_ADMIN_FULL_NAME=Super Admin
+
+CORS_ALLOWED_ORIGINS=https://votre-frontend.onrender.com
+```
+
+### Frontend (`.env.local`)
+```env
+NEXT_PUBLIC_API_URL=https://votre-backend.onrender.com/api
+```
 
 ---
 
-## 🛠️ Stack Technique (Prévisionnelle)
-
-### Frontend Web
-- React
-- TypeScript
-
-### Mobile
-- React Native
+## Lancement Local
 
 ### Backend
-- Node.js
-- NestJS
+```bash
+cd Backend
+python -m venv venv
+venv\Scripts\activate        # Windows
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py ensure_admin --email admin@test.com --password admin123
+python manage.py runserver
+```
 
-### Base de Données
-- PostgreSQL
-- ORM : Prisma ou TypeORM
-
-### Sécurité
-- JWT + Refresh Token
-- RBAC (Role-Based Access Control)
-
----
-
-## 🗄️ Schéma de Base de Données
-
-### Vue Générale
-Le système repose sur une base de données relationnelle permettant une gestion fine des produits, variantes et mouvements de stock.
-
----
-
-### Tables Principales
-
-#### **users**
-- id (PK)
-- name
-- email
-- password
-- role (ADMIN, MANAGER, SELLER)
-- created_at
-- updated_at
+### Frontend
+```bash
+cd Frontend
+npm install
+npm run dev
+```
 
 ---
 
-#### **categories**
-- id (PK)
-- name
-- sport_type
-- created_at
+## Structure du Projet
+
+```
+SoftCosy/
+├── Backend/
+│   ├── user/               # Authentification & gestion utilisateurs
+│   ├── product/            # Produits & variantes
+│   ├── stockmouvement/     # Stocks & mouvements
+│   ├── sale/               # Ventes & caisse
+│   ├── purchase/           # Achats fournisseurs
+│   ├── inventorycount/     # Inventaire physique
+│   ├── dashboard/          # API statistiques & alertes
+│   └── gestion_softcosy/   # Configuration Django
+└── Frontend/
+    ├── src/app/dashboard/  # Pages principales
+    └── src/components/     # Composants réutilisables
+```
 
 ---
 
-#### **products**
-- id (PK)
-- name
-- brand
-- type (maillot, chaussure, accessoire)
-- category_id (FK)
-- description
-- created_at
-- updated_at
+## Licence
 
----
-
-#### **product_variants**
-- id (PK)
-- product_id (FK)
-- sku (unique)
-- size
-- color
-- model
-- barcode (optional)
-- stock_quantity
-- min_stock
-- status (ACTIVE, DISCONTINUED)
-- created_at
-- updated_at
-
----
-
-#### **suppliers**
-- id (PK)
-- name
-- contact_email
-- phone
-- created_at
-
----
-
-#### **stock_movements**
-- id (PK)
-- variant_id (FK)
-- user_id (FK)
-- type (IN, OUT, ADJUSTMENT)
-- quantity
-- reason
-- created_at
-
----
-
-### Relations
-
-- Un **produit** appartient à une **catégorie**
-- Un **produit** possède plusieurs **variantes**
-- Une **variante** possède plusieurs **mouvements de stock**
-- Un **utilisateur** est à l’origine d’un mouvement de stock
-- Un **fournisseur** peut être lié à plusieurs produits (évolution future)
-
----
-
-### Diagramme Logique (simplifié)
-TBD
-
-----
-
-### 🔮 Évolutions Futures
-
-- Gestion multi-magasins
-- Intégration POS
-- Scan code-barres / QR Code
-- Prévision intelligente des stocks
-- Module e-commerce
-
----
-
-## 🤝 Contribution
-
-- Créer une branche dédiée  
-- Commits clairs et descriptifs  
-- Pull Request pour validation  
-
----
-
-## 📜 Licence
-
-Projet privé – toute utilisation nécessite une autorisation.
-
----
-
-## ✉️ Contact
-
-Projet maintenu par **Klaus Lawson**  
-Pour toute collaboration ou question, merci de contacter l’équipe projet.
+Projet privé — toute utilisation nécessite une autorisation.
+Contact : **[Virkas](https://wa.me/+22893953658)**

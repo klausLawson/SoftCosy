@@ -1,0 +1,45 @@
+services:
+  # ── Backend Django ────────────────────────────────────────────────────────
+  - type: web
+    name: softcosy-backend
+    runtime: python
+    rootDir: Backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate
+    startCommand: gunicorn gestion_softcosy.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: softcosy-backend.onrender.com
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DEFAULT_ADMIN_EMAIL
+        sync: false
+      - key: DEFAULT_ADMIN_PASSWORD
+        sync: false
+      - key: DEFAULT_ADMIN_FULL_NAME
+        value: Super Admin
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://softcosy-frontend.onrender.com
+
+  # ── Frontend Next.js ──────────────────────────────────────────────────────
+  - type: web
+    name: softcosy-frontend
+    runtime: node
+    rootDir: Frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://softcosy-backend.onrender.com/api

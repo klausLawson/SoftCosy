@@ -20,6 +20,7 @@ class VariantSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     selling_price = serializers.FloatField()
     stock = serializers.SerializerMethodField(read_only=True)
+    initial_stock = serializers.IntegerField(required=False, write_only=True, default=0)
 
     class Meta:
         model = Variant
@@ -36,12 +37,11 @@ class VariantSerializer(serializers.ModelSerializer):
             'is_active',
             'created_or_updated_at',
             'stock',
+            'initial_stock',
         ]
         read_only_fields = ['created_or_updated_at', 'product', 'stock']
 
     def get_stock(self, obj):
-        # Somme des stocks on_hand_qty pour cette variante
-        # On utilise le related_name 'stocks' défini dans stockmouvement.models.Stock
         return sum(s.on_hand_qty for s in obj.stocks.all())
 
 
@@ -133,15 +133,24 @@ class ProductFullSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        # Extraire les données des variantes (liste)
+        from stockmouvement.models import Stock, StockMovement
         variants_data = validated_data.pop('variants', [])
-
-        # Créer le produit
         product = Product.objects.create(**validated_data)
 
-        # Créer chaque variante liée au produit
         for variant_data in variants_data:
+            initial_stock = variant_data.pop('initial_stock', 0)
             variant = Variant.objects.create(product=product, **variant_data)
+            # Le signal create_stock_for_new_variant a déjà créé un Stock (on_hand_qty=0).
+            # On le récupère via get_or_create et on laisse le signal StockMovement gérer le calcul.
+            if initial_stock and initial_stock > 0:
+                stock_obj, _ = Stock.objects.get_or_create(variant=variant)
+                StockMovement.objects.create(
+                    stock=stock_obj,
+                    movement_type='ENTREE',
+                    quantite=initial_stock,
+                    reason='ACHAT_FOURNISSEUR',
+                    notes='Stock initial à la création du produit',
+                )
 
         return product
 
@@ -168,15 +177,41 @@ class ProductFullSerializer(serializers.ModelSerializer):
                 variant_id = variant_data.get('id')
 
                 if variant_id and variant_id in existing_variants:
-                    # Update variant existante
                     variant = existing_variants[variant_id]
+                    initial_stock = variant_data.pop('initial_stock', None)
                     for attr, value in variant_data.items():
                         setattr(variant, attr, value)
                     variant.save()
+
+                    # Ajuster le stock si la valeur a changé.
+                    # On utilise get_or_create pour éviter les doublons de Stock,
+                    # et on laisse le signal StockMovement calculer on_hand_qty.
+                    if initial_stock is not None:
+                        stock_obj, _ = Stock.objects.get_or_create(variant=variant)
+                        diff = initial_stock - stock_obj.on_hand_qty
+                        if diff != 0:
+                            StockMovement.objects.create(
+                                stock=stock_obj,
+                                movement_type='ENTREE' if diff > 0 else 'SORTIE',
+                                quantite=abs(diff),
+                                reason='CORRECTION_MANUELLE',
+                                notes='Correction de stock via modification du produit',
+                            )
+
                     incoming_variant_ids.append(variant_id)
                 else:
                     # Création de nouvelle variante
+                    initial_stock = variant_data.pop('initial_stock', 0)
                     variant = Variant.objects.create(product=instance, **variant_data)
+                    if initial_stock and initial_stock > 0:
+                        stock_obj, _ = Stock.objects.get_or_create(variant=variant)
+                        StockMovement.objects.create(
+                            stock=stock_obj,
+                            movement_type='ENTREE',
+                            quantite=initial_stock,
+                            reason='ACHAT_FOURNISSEUR',
+                            notes='Stock initial à la création de la variante',
+                        )
                     incoming_variant_ids.append(variant.id)
 
             # Supprimer les variantes qui ont été enlevées de la liste

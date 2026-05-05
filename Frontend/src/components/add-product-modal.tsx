@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { X, Plus, Trash2, Package, Tag, Info, Image as ImageIcon } from 'lucide-react'
+import { X, Plus, Trash2, Package, Tag, Info, Image as ImageIcon, Layers } from 'lucide-react'
 import api from '@/lib/api'
 import { Card } from '@/components/ui/card'
 import React from 'react'
@@ -18,7 +18,8 @@ export interface Variant {
   size?: string
   selling_price: number
   cost_price?: number
-  stock?: number          // Pour l'affichage (depuis le backend)
+  stock?: number          // Lecture seule depuis le backend
+  initial_stock?: number  // Write-only pour la création
   is_active: boolean
 }
 
@@ -76,7 +77,10 @@ export default function AddEditProductModal({
       setFormData({
         ...productToEdit,
         category: (productToEdit.category && typeof productToEdit.category === 'object') ? productToEdit.category.id : productToEdit.category,
-        variants: productToEdit.variants || []
+        variants: (productToEdit.variants || []).map(v => ({
+          ...v,
+          initial_stock: (v.stock as number) || 0
+        }))
       })
     } else {
       setFormData({
@@ -86,7 +90,7 @@ export default function AddEditProductModal({
         image_url: '',
         image: null,
         category: undefined,
-        variants: [{ selling_price: 0, is_active: true }]
+        variants: [{ selling_price: 0, is_active: true, initial_stock: 0 }]
       })
     }
   }, [productToEdit, isOpen])
@@ -173,7 +177,7 @@ export default function AddEditProductModal({
   const addVariant = () => {
     setFormData(prev => ({
       ...prev,
-      variants: [...prev.variants, { selling_price: 0, is_active: true }]
+      variants: [...prev.variants, { selling_price: 0, is_active: true, initial_stock: 0 }]
     }))
   }
 
@@ -263,6 +267,35 @@ export default function AddEditProductModal({
                     ))}
                   </select>
                 </div>
+                {formData.variants.length <= 1 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-muted-foreground" />
+                      Stock du produit
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={formData.variants[0]?.initial_stock ?? 0}
+                      onChange={(e) => {
+                        const val = Math.max(0, Number(e.target.value))
+                        setFormData(prev => ({
+                          ...prev,
+                          variants: prev.variants.length > 0
+                            ? prev.variants.map((v, i) => i === 0 ? { ...v, initial_stock: val } : v)
+                            : [{ selling_price: 0, is_active: true, initial_stock: val }]
+                        }))
+                      }}
+                      placeholder="0"
+                      className="h-11"
+                    />
+                    {!isEditMode && (
+                      <p className="text-xs text-muted-foreground">
+                        Si vous ajoutez plusieurs variantes, définissez le stock de chacune dans la section Variantes.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold flex items-center gap-2">
                     <ImageIcon className="w-4 h-4 text-muted-foreground" />
@@ -339,7 +372,7 @@ export default function AddEditProductModal({
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase">Taille / Modèle</label>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase">Taille / Couleur</label>
                         <Input 
                           value={variant.size || ''} 
                           onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
@@ -348,7 +381,7 @@ export default function AddEditProductModal({
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase">Prix Vente (€) *</label>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase">Prix Vente (FCFA) *</label>
                         <Input 
                           type="number"
                           step="0.01"
@@ -358,15 +391,19 @@ export default function AddEditProductModal({
                           className="h-9 text-xs font-bold"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase">Stock actuel</label>
-                        <Input 
-                          type="number"
-                          value={variant.stock || 0} 
-                          disabled
-                          className="h-9 text-xs bg-muted/50 cursor-not-allowed opacity-70"
-                        />
-                      </div>
+                      {/* Stock éditable pour chaque variante quand il y en a plusieurs */}
+                      {formData.variants.length > 1 && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase">Stock</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={variant.initial_stock ?? 0}
+                            onChange={(e) => handleVariantChange(index, 'initial_stock', Math.max(0, Number(e.target.value)))}
+                            className="h-9 text-xs font-bold"
+                          />
+                        </div>
+                      )}
                     </div>
                     
                     <button

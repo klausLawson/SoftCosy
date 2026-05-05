@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Stock, StockMovement, Alert, SystemSettings
+from .models import Stock, StockMovement, SystemSettings
 
 
 class StockSerializer(serializers.ModelSerializer):
@@ -66,7 +66,7 @@ class StockMovementSerializer(serializers.ModelSerializer):
 
         if stock and quantite and movement_type:
             current_stock_qty = stock.on_hand_qty
-            
+
             # If updating, we must consider the old movement effect
             old_effect = 0
             if self.instance and self.instance.pk:
@@ -76,10 +76,10 @@ class StockMovementSerializer(serializers.ModelSerializer):
                     old_effect = old_qty
                 else:
                     old_effect = -old_qty
-            
+
             new_effect = quantite if movement_type in ["ENTREE", "AJUSTEMENT"] else -quantite
             resulting_stock = current_stock_qty - old_effect + new_effect
-            
+
             if resulting_stock < 0:
                 raise serializers.ValidationError({
                     "quantite": f"Opération refusée : le stock final serait de {resulting_stock}. Vous n'avez pas assez d'articles."
@@ -88,18 +88,7 @@ class StockMovementSerializer(serializers.ModelSerializer):
         return data
 
 
-class AlertSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Alert
-        fields = [
-            'id', 'stock', 'type', 'severite', 'message', 'titre',
-            'dateAlerte', 'estLue', 'estResolue', 'dateResolution',
-            'created_or_updated_at', 'user'
-        ]
-        read_only_fields = ['id', 'dateAlerte', 'created_or_updated_at', 'user']
-
-
 class SystemSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemSettings
-        fields = '__all__'
+        fields = '__all__'

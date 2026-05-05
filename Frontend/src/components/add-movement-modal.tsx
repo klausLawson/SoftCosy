@@ -20,7 +20,8 @@ interface AddMovementModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
-  movementToEdit?: any // You can use StockMovement interface here if exported
+  movementToEdit?: any
+  preselectedProductId?: number  // Pré-sélectionne les stocks d'un produit spécifique
 }
 
 const movementTypes = [
@@ -62,6 +63,7 @@ export default function AddMovementModal({
   onClose,
   onSuccess,
   movementToEdit,
+  preselectedProductId,
 }: AddMovementModalProps) {
   const queryClient = useQueryClient()
   
@@ -98,8 +100,23 @@ export default function AddMovementModal({
     enabled: isOpen
   })
 
-  // Accès sécurisé aux résultats paginés ou non (fallback)
-  const stocks = Array.isArray(stocksData) ? stocksData : (stocksData?.results || [])
+  const allStocks: Stock[] = Array.isArray(stocksData) ? stocksData : (stocksData?.results || [])
+
+  // Filtrer par produit si preselectedProductId est fourni
+  const stocks = preselectedProductId
+    ? allStocks.filter(s => s.product_name && allStocks.find(
+        a => a.id === s.id && (s as any).product_id === preselectedProductId
+      ))
+    : allStocks
+
+  // Auto-sélectionner si un seul stock correspond au produit pré-sélectionné
+  useEffect(() => {
+    if (!preselectedProductId || movementToEdit || !isOpen) return
+    const matching = allStocks.filter(s => (s as any).product_id === preselectedProductId)
+    if (matching.length === 1) {
+      setFormData(prev => ({ ...prev, stock: String(matching[0].id) }))
+    }
+  }, [preselectedProductId, allStocks, isOpen, movementToEdit])
 
   // ── Mutation ──────────────────────────────────
   const mutation = useMutation({
@@ -112,7 +129,7 @@ export default function AddMovementModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stockMovements'] })
       queryClient.invalidateQueries({ queryKey: ['stocks'] })
-      queryClient.invalidateQueries({ queryKey: ['alerts'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-recent'] })
       if (onSuccess) onSuccess()
       onClose()
       resetForm()
@@ -218,6 +235,11 @@ export default function AddMovementModal({
               <label className="text-sm font-bold flex items-center gap-2">
                 <Package className="w-4 h-4 text-muted-foreground" />
                 Produit / Variantes *
+                {preselectedProductId && (
+                  <span className="ml-auto text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                    Pré-sélectionné depuis Produits
+                  </span>
+                )}
               </label>
               <select
                 name="stock"
@@ -227,10 +249,13 @@ export default function AddMovementModal({
                 className="w-full h-11 px-3 py-2 rounded-xl border border-input bg-background text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
                 required
               >
-                <option value="">{stocksLoading ? 'Chargement des stocks...' : 'Sélectionnez un item en stock...'}</option>
-                {stocks.map((s) => (
+                <option value="">{stocksLoading ? 'Chargement des stocks...' : 'Sélectionnez une variante...'}</option>
+                {(preselectedProductId
+                  ? allStocks.filter(s => (s as any).product_id === preselectedProductId)
+                  : allStocks
+                ).map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.product_name} - {s.variant_sku} (Stock: {s.on_hand_qty})
+                    {s.product_name} — {s.variant_sku} (Stock actuel : {s.on_hand_qty})
                   </option>
                 ))}
               </select>

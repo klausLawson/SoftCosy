@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SoftCosy — Frontend
 
-## Getting Started
+Interface web Next.js pour le système de gestion SoftCosy.
 
-First, run the development server:
+---
+
+## Stack
+
+- **Next.js 16** (App Router)
+- **React 19** + **TypeScript**
+- **Tailwind CSS 4**
+- **Tanstack React Query** — gestion des données serveur
+- **Axios** — appels API
+- **Recharts** — graphiques
+- **Lucide React** — icônes
+- **Radix UI** — composants accessibles (shadcn/ui)
+
+---
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd Frontend
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Créer `.env.local` :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Démarrage
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev      # développement → http://localhost:3000
+npm run build    # build production
+npm run start    # serveur production
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Pages du Dashboard
 
-## Deploy on Vercel
+| Route | Description |
+|---|---|
+| `/dashboard` | Vue générale : stats, graphiques, alertes |
+| `/dashboard/products` | Catalogue produits + variantes |
+| `/dashboard/stocks` | Suivi des stocks par variante |
+| `/dashboard/cashier` | Interface caisse (point de vente) |
+| `/dashboard/sales` | Historique des ventes |
+| `/dashboard/users` | Gestion des utilisateurs |
+| `/dashboard/settings` | Paramètres système + alertes stock |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Variables d'Environnement
+
+| Variable | Description | Exemple |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | URL de base de l'API backend | `https://votre-backend.onrender.com/api` |
+
+---
+
+## Structure
+
+```
+Frontend/
+├── src/
+│   ├── app/
+│   │   ├── dashboard/          # Layout + pages
+│   │   │   ├── layout.tsx      # Sidebar + Navbar + Footer copyright
+│   │   │   ├── page.tsx        # Dashboard principal
+│   │   │   ├── products/       # Gestion produits
+│   │   │   ├── stocks/         # Suivi stocks
+│   │   │   ├── cashier/        # Interface caisse
+│   │   │   ├── sales/          # Historique ventes
+│   │   │   ├── users/          # Gestion utilisateurs
+│   │   │   └── settings/       # Paramètres
+│   │   └── login/              # Authentification
+│   ├── components/
+│   │   ├── ui/                 # Composants shadcn/ui
+│   │   ├── sidebar.tsx
+│   │   ├── navbar.tsx
+│   │   ├── notification-bell.tsx   # Alertes stock en temps réel
+│   │   ├── add-product-modal.tsx
+│   │   ├── add-movement-modal.tsx
+│   │   └── theme-colors-context.tsx
+│   └── lib/
+│       ├── api.ts              # Instance Axios configurée
+│       └── utils.ts
+```
+
+---
+
+## Déploiement sur Render
+
+1. Créer un **Web Service** sur Render
+2. Connecter le dépôt GitHub
+3. **Root Directory** : `Frontend`
+4. **Build Command** : `npm install && npm run build`
+5. **Start Command** : `npm run start`
+6. **Variable d'environnement** :
+   - `NEXT_PUBLIC_API_URL` = `https://votre-backend.onrender.com/api`
+7. **Port** : `3000`
+
+> Next.js sur Render nécessite un Web Service (pas un Static Site) car il utilise le SSR.
