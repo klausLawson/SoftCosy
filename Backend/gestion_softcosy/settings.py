@@ -203,9 +203,30 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Media files configuration (Uploaded images)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# ── Stockage des fichiers média ───────────────────────────────────────────────
+# En production : Supabase Storage (S3-compatible)
+# En développement : fichiers locaux
+_USE_SUPABASE_STORAGE = all([
+    os.getenv('SUPABASE_S3_ENDPOINT'),
+    os.getenv('SUPABASE_ACCESS_KEY_ID'),
+    os.getenv('SUPABASE_SECRET_ACCESS_KEY'),
+])
+
+if _USE_SUPABASE_STORAGE:
+    INSTALLED_APPS += ['storages']
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_S3_ENDPOINT_URL = os.getenv('SUPABASE_S3_ENDPOINT')
+    AWS_ACCESS_KEY_ID = os.getenv('SUPABASE_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('SUPABASE_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('SUPABASE_BUCKET_NAME', 'media')
+    AWS_S3_REGION_NAME = os.getenv('SUPABASE_REGION', 'eu-west-2')
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = False
+    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ── Google Drive — Backup quotidien ───────────────────────────────────────────
 # Fichier client_secrets OAuth 2.0 (type "Application de bureau") téléchargé depuis Google Cloud
