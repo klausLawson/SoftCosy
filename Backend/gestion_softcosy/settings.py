@@ -215,7 +215,7 @@ _USE_SUPABASE_STORAGE = all([
 if _USE_SUPABASE_STORAGE:
     INSTALLED_APPS += ['storages']
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    AWS_S3_ENDPOINT_URL = os.getenv('SUPABASE_S3_ENDPOINT')
+    AWS_S3_ENDPOINT_URL = os.getenv('SUPABASE_S3_ENDPOINT')       # ex: https://xxx.supabase.co/storage/v1/s3
     AWS_ACCESS_KEY_ID = os.getenv('SUPABASE_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('SUPABASE_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('SUPABASE_BUCKET_NAME', 'media')
@@ -223,7 +223,11 @@ if _USE_SUPABASE_STORAGE:
     AWS_DEFAULT_ACL = 'public-read'
     AWS_S3_FILE_OVERWRITE = False
     AWS_QUERYSTRING_AUTH = False
-    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
+    # Construit l'URL publique correcte : /storage/v1/object/public/<bucket>/<fichier>
+    # (différente de l'endpoint S3 qui utilise /storage/v1/s3/)
+    _supabase_domain = AWS_S3_ENDPOINT_URL.split('/storage/')[0].replace('https://', '').replace('http://', '')
+    AWS_S3_CUSTOM_DOMAIN = f"{_supabase_domain}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
