@@ -204,30 +204,23 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # ── Stockage des fichiers média ───────────────────────────────────────────────
-# En production : Supabase Storage (S3-compatible)
+# En production : Cloudinary
 # En développement : fichiers locaux
-_USE_SUPABASE_STORAGE = all([
-    os.getenv('SUPABASE_S3_ENDPOINT'),
-    os.getenv('SUPABASE_ACCESS_KEY_ID'),
-    os.getenv('SUPABASE_SECRET_ACCESS_KEY'),
+_USE_CLOUDINARY = all([
+    os.getenv('CLOUDINARY_CLOUD_NAME'),
+    os.getenv('CLOUDINARY_API_KEY'),
+    os.getenv('CLOUDINARY_API_SECRET'),
 ])
 
-if _USE_SUPABASE_STORAGE:
-    INSTALLED_APPS += ['storages']
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    AWS_S3_ENDPOINT_URL = os.getenv('SUPABASE_S3_ENDPOINT')       # ex: https://xxx.supabase.co/storage/v1/s3
-    AWS_ACCESS_KEY_ID = os.getenv('SUPABASE_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.getenv('SUPABASE_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('SUPABASE_BUCKET_NAME', 'media')
-    AWS_S3_REGION_NAME = os.getenv('SUPABASE_REGION', 'eu-west-2')
-    AWS_DEFAULT_ACL = 'public-read'
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_QUERYSTRING_AUTH = False
-    # Construit l'URL publique correcte : /storage/v1/object/public/<bucket>/<fichier>
-    # (différente de l'endpoint S3 qui utilise /storage/v1/s3/)
-    _supabase_domain = AWS_S3_ENDPOINT_URL.split('/storage/')[0].replace('https://', '').replace('http://', '')
-    AWS_S3_CUSTOM_DOMAIN = f"{_supabase_domain}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+if _USE_CLOUDINARY:
+    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+        'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+        'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    }
+    MEDIA_URL = '/media/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
