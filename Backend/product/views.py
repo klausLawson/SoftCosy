@@ -105,38 +105,38 @@ class ProductViewSet(viewsets.ModelViewSet):
         return data
 
     def create(self, request, *args, **kwargs):
-        import traceback, logging
-        logger = logging.getLogger(__name__)
-        data = self._build_multipart_data(request)
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
+        import traceback as tb_mod
+        from rest_framework.exceptions import ValidationError as DRFValidationError
         try:
+            data = self._build_multipart_data(request)
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except DRFValidationError:
+            raise
         except Exception as exc:
-            tb = traceback.format_exc()
-            logger.error("Product create failed:\n%s", tb)
             return Response(
-                {'detail': f'{type(exc).__name__}: {exc}', 'traceback': tb},
+                {'detail': f'{type(exc).__name__}: {exc}', 'tb': tb_mod.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
-        import traceback, logging
-        logger = logging.getLogger(__name__)
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        data = self._build_multipart_data(request)
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
+        import traceback as tb_mod
+        from rest_framework.exceptions import ValidationError as DRFValidationError
         try:
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            data = self._build_multipart_data(request)
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+            serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
+            return Response(serializer.data)
+        except DRFValidationError:
+            raise
         except Exception as exc:
-            tb = traceback.format_exc()
-            logger.error("Product update failed:\n%s", tb)
             return Response(
-                {'detail': f'{type(exc).__name__}: {exc}', 'traceback': tb},
+                {'detail': f'{type(exc).__name__}: {exc}', 'tb': tb_mod.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        return Response(serializer.data)
