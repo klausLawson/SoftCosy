@@ -192,11 +192,11 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # STORAGES remplace DEFAULT_FILE_STORAGE et STATICFILES_STORAGE (supprimés en Django 5.1)
-# CompressedStaticFilesStorage (sans manifest strict) évite le MissingFileError
-# sur les icônes admin référencées dans les CSS de Django 6.0
+# WhiteNoiseMiddleware gère compression + cache au démarrage du serveur,
+# StaticFilesStorage évite les erreurs de compression parallèle au build
 STORAGES = {
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
