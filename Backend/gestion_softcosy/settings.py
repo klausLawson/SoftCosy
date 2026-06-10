@@ -190,7 +190,16 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# STORAGES remplace DEFAULT_FILE_STORAGE et STATICFILES_STORAGE (supprimés en Django 5.1)
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+}
 
 # Configuration CORS pour accepter les requêtes du frontend
 _cors_extra = os.getenv('CORS_ALLOWED_ORIGINS', '')
@@ -213,8 +222,15 @@ _USE_CLOUDINARY = all([
 ])
 
 if _USE_CLOUDINARY:
-    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    # cloudinary_storage doit être avant django.contrib.staticfiles
+    _sf_idx = next(
+        (i for i, app in enumerate(INSTALLED_APPS) if app == 'django.contrib.staticfiles'),
+        len(INSTALLED_APPS)
+    )
+    INSTALLED_APPS.insert(_sf_idx, 'cloudinary_storage')
+    INSTALLED_APPS.append('cloudinary')
+    # Django 4.2+ : utiliser STORAGES au lieu de DEFAULT_FILE_STORAGE
+    STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
         'API_KEY': os.getenv('CLOUDINARY_API_KEY'),

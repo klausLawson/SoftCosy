@@ -119,14 +119,25 @@ class ProductFullSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def to_internal_value(self, data):
-        # Si 'variants' est une chaîne (JSON envoyé via FormData), on la parse
-        if 'variants' in data and isinstance(data['variants'], str):
-            import json
+        import json
+        variants_raw = data.get('variants') if hasattr(data, 'get') else None
+        if isinstance(variants_raw, str):
             try:
-                # Créer une copie mutable du dictionnaire si nécessaire
-                if hasattr(data, 'dict'):
-                    data = data.dict()
-                data['variants'] = json.loads(data['variants'])
+                variants_parsed = json.loads(variants_raw)
+                # Construire un dict mutable sans perdre les fichiers uploadés
+                if isinstance(data, dict):
+                    new_data = dict(data)
+                else:
+                    new_data = {key: data[key] for key in data}
+                # Ajouter explicitement les fichiers depuis request.FILES
+                # (au cas où request.data n'inclut pas les fichiers)
+                request = self.context.get('request')
+                if request and hasattr(request, 'FILES') and request.FILES:
+                    for file_key, file_value in request.FILES.items():
+                        if file_key not in new_data:
+                            new_data[file_key] = file_value
+                new_data['variants'] = variants_parsed
+                data = new_data
             except (ValueError, TypeError):
                 pass
         return super().to_internal_value(data)
