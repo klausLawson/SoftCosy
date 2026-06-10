@@ -105,18 +105,38 @@ class ProductViewSet(viewsets.ModelViewSet):
         return data
 
     def create(self, request, *args, **kwargs):
+        import traceback, logging
+        logger = logging.getLogger(__name__)
         data = self._build_multipart_data(request)
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        try:
+            self.perform_create(serializer)
+        except Exception as exc:
+            tb = traceback.format_exc()
+            logger.error("Product create failed:\n%s", tb)
+            return Response(
+                {'detail': f'{type(exc).__name__}: {exc}', 'traceback': tb},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
+        import traceback, logging
+        logger = logging.getLogger(__name__)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         data = self._build_multipart_data(request)
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        try:
+            self.perform_update(serializer)
+        except Exception as exc:
+            tb = traceback.format_exc()
+            logger.error("Product update failed:\n%s", tb)
+            return Response(
+                {'detail': f'{type(exc).__name__}: {exc}', 'traceback': tb},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         return Response(serializer.data)
