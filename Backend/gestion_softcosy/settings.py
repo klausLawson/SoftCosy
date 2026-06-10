@@ -200,6 +200,8 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
 }
+# Compat pour django-cloudinary-storage 0.3.0 qui accède encore à settings.STATICFILES_STORAGE
+STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
 
 # Configuration CORS pour accepter les requêtes du frontend
 _cors_extra = os.getenv('CORS_ALLOWED_ORIGINS', '')
