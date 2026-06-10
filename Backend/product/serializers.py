@@ -124,20 +124,22 @@ class ProductFullSerializer(serializers.ModelSerializer):
         if isinstance(variants_raw, str):
             try:
                 variants_parsed = json.loads(variants_raw)
-                # Construire un dict mutable sans perdre les fichiers uploadés
-                if isinstance(data, dict):
-                    new_data = dict(data)
+                # data.dict() produit un dict Python standard avec valeurs scalaires
+                if hasattr(data, 'dict'):
+                    mutable = data.dict()
+                elif isinstance(data, dict):
+                    mutable = dict(data)
                 else:
-                    new_data = {key: data[key] for key in data}
-                # Ajouter explicitement les fichiers depuis request.FILES
-                # (au cas où request.data n'inclut pas les fichiers)
+                    mutable = {}
+                # Toujours récupérer les fichiers depuis request.FILES
+                # (garantit que le fichier image est inclus quelle que soit la
+                # structure interne de request.data)
                 request = self.context.get('request')
-                if request and hasattr(request, 'FILES') and request.FILES:
-                    for file_key, file_value in request.FILES.items():
-                        if file_key not in new_data:
-                            new_data[file_key] = file_value
-                new_data['variants'] = variants_parsed
-                data = new_data
+                if request is not None:
+                    for field_name, uploaded_file in request.FILES.items():
+                        mutable[field_name] = uploaded_file
+                mutable['variants'] = variants_parsed
+                data = mutable
             except (ValueError, TypeError):
                 pass
         return super().to_internal_value(data)

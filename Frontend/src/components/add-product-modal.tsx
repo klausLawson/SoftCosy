@@ -130,15 +130,13 @@ export default function AddEditProductModal({
       // Let's pass the variants explicitly:
       formPayload.append('variants', JSON.stringify(data.variants || []))
 
-      // Wait, standard DRF doesn't parse JSON arrays deeply from FormData automatically unless configured.
-      // We will fix the backend to parse 'variants' if it's a string, or just use multipart.
-      // Alternatively, we use standard axios config for multipart.
-      const config = { headers: { 'Content-Type': 'multipart/form-data' } }
-
+      // Ne pas définir Content-Type manuellement pour FormData :
+      // Axios/browser le définit automatiquement avec le boundary correct
+      // (multipart/form-data; boundary=----XYZ)
       if (isEditMode && productToEdit?.id) {
-        return api.patch(`/products/${productToEdit.id}/`, formPayload, config)
+        return api.patch(`/products/${productToEdit.id}/`, formPayload)
       }
-      return api.post('/products/', formPayload, config)
+      return api.post('/products/', formPayload)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
