@@ -120,26 +120,12 @@ class ProductFullSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         import json
-        variants_raw = data.get('variants') if hasattr(data, 'get') else None
-        if isinstance(variants_raw, str):
+        # Fallback : si variants est encore une chaîne JSON, la parser
+        # (normalement déjà géré par ProductViewSet._build_multipart_data)
+        if isinstance(data, dict) and isinstance(data.get('variants'), str):
             try:
-                variants_parsed = json.loads(variants_raw)
-                # data.dict() produit un dict Python standard avec valeurs scalaires
-                if hasattr(data, 'dict'):
-                    mutable = data.dict()
-                elif isinstance(data, dict):
-                    mutable = dict(data)
-                else:
-                    mutable = {}
-                # Toujours récupérer les fichiers depuis request.FILES
-                # (garantit que le fichier image est inclus quelle que soit la
-                # structure interne de request.data)
-                request = self.context.get('request')
-                if request is not None:
-                    for field_name, uploaded_file in request.FILES.items():
-                        mutable[field_name] = uploaded_file
-                mutable['variants'] = variants_parsed
-                data = mutable
+                data = dict(data)
+                data['variants'] = json.loads(data['variants'])
             except (ValueError, TypeError):
                 pass
         return super().to_internal_value(data)
