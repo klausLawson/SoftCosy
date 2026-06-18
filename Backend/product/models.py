@@ -65,18 +65,6 @@ class Product(models.Model):
         verbose_name="Catégorie"
     )
 
-    # ── Champs hérités — conservés pour compatibilité (une seule image) ───────
-    # Ces champs seront remplacés progressivement par le modèle ProductImage
-    # mais restent actifs pendant la période de transition.
-    image     = models.ImageField(
-        upload_to='products/images/', null=True, blank=True,
-        verbose_name="Image principale (fichier)"
-    )
-    image_url = models.CharField(
-        max_length=500, blank=True, null=True,
-        verbose_name="Image principale (URL externe)"
-    )
-
     # ── [SITE] Marque ─────────────────────────────────────────────────────────
     # Texte libre : Nike, Adidas, Under Armour, etc.
     # Utilisé pour le filtre "Marques" sur la vitrine.

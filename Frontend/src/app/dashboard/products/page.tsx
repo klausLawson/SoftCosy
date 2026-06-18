@@ -50,12 +50,9 @@ interface APIProduct {
   name: string
   code_produit?: string
   description?: string
-  image?: string
-  image_url?: string
   category?: { id: number; name: string }
   total_stock?: number
   variants: APIVariant[]
-  // Champs pour la vitrine web
   brand?: string
   badge?: string
   icon?: string
@@ -122,13 +119,7 @@ export default function ProductsPage() {
   }
 
   const getImageUrl = (product: APIProduct): string | undefined => {
-    // Galerie multi-images : utiliser la première image en priorité
-    if (product.product_images && product.product_images.length > 0) {
-      return product.product_images[0].image_url
-    }
-    if (product.image_url) return product.image_url
-    if (product.image) return product.image
-    return undefined
+    return product.product_images?.[0]?.image_url
   }
 
   // On ne bloque plus tout l'affichage

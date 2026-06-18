@@ -86,11 +86,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'description', 'code_produit',
-            # Champs image legacy (conservés pendant la transition)
-            'image_url', 'image',
-            # Nouveaux champs pour la vitrine
             'brand', 'badge', 'icon', 'fabric', 'colors', 'is_published',
-            # Relations
             'category', 'total_stock', 'variants', 'product_images',
         ]
 
@@ -123,7 +119,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'description', 'code_produit',
-            'image_url', 'image',
             'brand', 'badge', 'icon', 'fabric', 'colors', 'is_published',
             'category', 'variants', 'total_stock', 'product_images',
         ]
@@ -185,7 +180,6 @@ class ProductFullSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'description', 'code_produit',
-            'image_url', 'image',
             'brand', 'badge', 'icon', 'fabric', 'colors', 'is_published',
             'category', 'category_id',
             'variants', 'product_images', 'product_images_data',
@@ -271,7 +265,7 @@ class ProductFullSerializer(serializers.ModelSerializer):
 
         # Mettre à jour tous les champs scalaires du produit
         champs_a_mettre_a_jour = [
-            'name', 'description', 'code_produit', 'image_url', 'image',
+            'name', 'description', 'code_produit',
             'brand', 'badge', 'icon', 'fabric', 'colors', 'is_published', 'category',
         ]
         for champ in champs_a_mettre_a_jour:
@@ -418,19 +412,9 @@ class SiteProductSerializer(serializers.ModelSerializer):
         return [t for t in tailles if not (t in deja_vus or deja_vus.add(t))]
 
     def get_images(self, obj):
-        """
-        Retourne les URLs Cloudinary de la galerie, triées par ordre.
-        Si aucune image dans la galerie, utilise l'image_url legacy comme fallback.
-        """
-        # Galerie principale (nouveau système multi-images)
-        urls = [
+        """Retourne les URLs Cloudinary de la galerie, triées par ordre."""
+        return [
             img.image_url
             for img in obj.product_images.order_by('order')
             if img.image_url
         ]
-
-        # Fallback sur l'image legacy si la galerie est vide
-        if not urls and obj.image_url:
-            urls = [obj.image_url]
-
-        return urls
