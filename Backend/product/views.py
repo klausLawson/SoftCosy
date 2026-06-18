@@ -179,7 +179,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     )
     def upload_image(self, request):
         """
-        Upload une image vers Cloudinary et retourne son URL + public_id.
+        Upload une image et retourne son URL + public_id.
+
+        - En production (Cloudinary configuré) : upload vers Cloudinary.
+        - En développement local (pas de credentials Cloudinary) : sauvegarde
+          dans media/products/images/ et retourne une URL localhost.
 
         Usage :
             POST /api/products/upload-image/
@@ -188,10 +192,6 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         Réponse :
             {"url": "https://res.cloudinary.com/...", "public_id": "products/images/xyz"}
-
-        Le frontend utilise cet endpoint AVANT de créer/modifier un produit.
-        Les URLs retournées sont ensuite envoyées dans 'product_images_data'
-        lors de la sauvegarde du produit.
         """
         fichier = request.FILES.get('image')
         if not fichier:
@@ -201,31 +201,41 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            # Configurer Cloudinary explicitement depuis les settings Django
-            # (au cas où django-cloudinary-storage ne l'aurait pas encore fait)
             if hasattr(settings, 'CLOUDINARY_STORAGE'):
+                # Production : upload vers Cloudinary
                 cloudinary.config(
                     cloud_name=settings.CLOUDINARY_STORAGE.get('CLOUD_NAME'),
                     api_key=settings.CLOUDINARY_STORAGE.get('API_KEY'),
                     api_secret=settings.CLOUDINARY_STORAGE.get('API_SECRET'),
                 )
+                resultat = cloudinary.uploader.upload(
+                    fichier,
+                    folder='products/images',
+                    resource_type='image',
+                    quality='auto:good',
+                    fetch_format='auto',
+                )
+                return Response({
+                    'url':       resultat['secure_url'],
+                    'public_id': resultat['public_id'],
+                }, status=status.HTTP_201_CREATED)
 
-            # Uploader vers Cloudinary dans le dossier dédié aux produits
-            resultat = cloudinary.uploader.upload(
-                fichier,
-                folder='products/images',
-                resource_type='image',
-                quality='auto:good',   # Compression intelligente
-                fetch_format='auto',   # WebP si supporté par le navigateur
-            )
-
-            return Response({
-                'url':       resultat['secure_url'],
-                'public_id': resultat['public_id'],
-            }, status=status.HTTP_201_CREATED)
+            else:
+                # Dev local : sauvegarde dans media/products/images/
+                from django.core.files.storage import default_storage
+                from django.core.files.base import ContentFile
+                chemin = default_storage.save(
+                    f'products/images/{fichier.name}',
+                    ContentFile(fichier.read()),
+                )
+                url_locale = request.build_absolute_uri(settings.MEDIA_URL + chemin)
+                return Response({
+                    'url':       url_locale,
+                    'public_id': chemin,
+                }, status=status.HTTP_201_CREATED)
 
         except Exception as exc:
-            logger.error("Erreur upload Cloudinary : %s", exc)
+            logger.error("Erreur upload image : %s", exc)
             return Response(
                 {'detail': f'Erreur lors de l\'upload : {exc}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -256,22 +266,27 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            # Supprimer sur Cloudinary
             if hasattr(settings, 'CLOUDINARY_STORAGE'):
+                # Production : suppression sur Cloudinary
                 cloudinary.config(
                     cloud_name=settings.CLOUDINARY_STORAGE.get('CLOUD_NAME'),
                     api_key=settings.CLOUDINARY_STORAGE.get('API_KEY'),
                     api_secret=settings.CLOUDINARY_STORAGE.get('API_SECRET'),
                 )
-            cloudinary.uploader.destroy(public_id)
+                cloudinary.uploader.destroy(public_id)
+            else:
+                # Dev local : suppression du fichier local (public_id = chemin relatif)
+                from django.core.files.storage import default_storage
+                if default_storage.exists(public_id):
+                    default_storage.delete(public_id)
 
             # Supprimer l'entrée ProductImage en base si elle existe
             ProductImage.objects.filter(cloudinary_public_id=public_id).delete()
 
-            return Response({'detail': 'Image supprimée avec succès.'}, status=status.HTTP_200_OK)
+            return Response({'detail': 'Image supprimee avec succes.'}, status=status.HTTP_200_OK)
 
         except Exception as exc:
-            logger.error("Erreur suppression Cloudinary : %s", exc)
+            logger.error("Erreur suppression image : %s", exc)
             return Response(
                 {'detail': f'Erreur lors de la suppression : {exc}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
