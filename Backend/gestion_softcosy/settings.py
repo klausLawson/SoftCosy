@@ -205,13 +205,20 @@ STORAGES = {
 # Compat pour django-cloudinary-storage 0.3.0 qui accède encore à settings.STATICFILES_STORAGE
 STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
 
-# Configuration CORS pour accepter les requêtes du frontend
+# Configuration CORS — autorise les requêtes cross-origin depuis :
+# - le frontend de gestion (Next.js en local et sur Vercel)
+# - la vitrine du site web (Vercel)
+# - tout domaine supplémentaire défini dans CORS_ALLOWED_ORIGINS (variable d'env)
 _cors_extra = os.getenv('CORS_ALLOWED_ORIGINS', '')
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
+    # Site vitrine Soft&Cozy (Vercel)
+    'https://siteweb-softcosy.vercel.app',
+    # Application de gestion SoftCosy (Vercel)
+    'https://soft-cosy.vercel.app',
 ] + [o.strip() for o in _cors_extra.split(',') if o.strip()]
 
 CORS_ALLOW_CREDENTIALS = True

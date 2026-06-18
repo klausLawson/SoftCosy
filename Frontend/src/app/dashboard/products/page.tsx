@@ -55,6 +55,14 @@ interface APIProduct {
   category?: { id: number; name: string }
   total_stock?: number
   variants: APIVariant[]
+  // Champs pour la vitrine web
+  brand?: string
+  badge?: string
+  icon?: string
+  fabric?: string
+  is_published?: boolean
+  colors?: string[]
+  product_images?: Array<{ id: number; image_url: string; cloudinary_public_id: string; order: number }>
 }
 
 export default function ProductsPage() {
@@ -114,6 +122,10 @@ export default function ProductsPage() {
   }
 
   const getImageUrl = (product: APIProduct): string | undefined => {
+    // Galerie multi-images : utiliser la première image en priorité
+    if (product.product_images && product.product_images.length > 0) {
+      return product.product_images[0].image_url
+    }
     if (product.image_url) return product.image_url
     if (product.image) return product.image
     return undefined
