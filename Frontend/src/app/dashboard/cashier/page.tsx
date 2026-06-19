@@ -22,8 +22,7 @@ interface RawProduct {
   id: number
   name: string
   category?: { id: number; name: string }
-  image?: string
-  image_url?: string
+  product_images?: { image_url: string; order: number }[]
   variants: Variant[]
 }
 
@@ -156,7 +155,7 @@ export default function CashierPage() {
         category: p.category?.name || 'Non classé',
         price: v.selling_price || 0,
         quantity: 1,
-        image: p.image || p.image_url || '/placeholder.svg',
+        image: p.product_images?.[0]?.image_url || '/placeholder.svg',
         stock: v.stock,
       }]
     })
@@ -313,7 +312,7 @@ export default function CashierPage() {
                     >
                       <div className="aspect-square bg-muted overflow-hidden relative">
                         <img
-                          src={product.image || product.image_url || '/placeholder.svg'}
+                          src={product.product_images?.[0]?.image_url || '/placeholder.svg'}
                           alt={product.name}
                           className={`w-full h-full object-cover transition-transform ${stock > 0 ? 'hover:scale-110' : ''}`}
                         />
