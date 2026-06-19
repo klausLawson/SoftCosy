@@ -5,6 +5,38 @@ from django.db import transaction
 
 from .models import Category, Product, ProductImage, Variant
 
+# Tailles standards dans l'ordre logique d'affichage (du plus petit au plus grand).
+# Utilisé par SiteProductSerializer pour extraire et trier les tailles de variantes
+# dont le champ 'size' peut contenir "TAILLE / COULEUR" ou "COULEUR / TAILLE".
+_TAILLES_ORDONNEES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL', '5XL', 'UNIQUE']
+_TAILLE_RANG       = {t: i for i, t in enumerate(_TAILLES_ORDONNEES)}
+
+
+def _extraire_taille(valeur_size):
+    """
+    Depuis un champ size de variante ("3XL", "3XL / Noir", "Noir / 3XL", "38"),
+    extrait la partie taille reconnue. Cherche dans chaque segment séparé par '/'
+    pour être robuste à l'ordre d'encodage dans l'app de gestion.
+    Retourne la taille en majuscule si standard, ou le premier segment sinon.
+    """
+    segments = [s.strip().upper() for s in valeur_size.split('/')]
+    for seg in segments:
+        if seg in _TAILLE_RANG:
+            return seg
+        # Taille numérique (ex: pointure 38, 42…)
+        if seg.isdigit():
+            return seg
+    return segments[0]
+
+
+def _rang_taille(taille):
+    """Clé de tri : tailles standard d'abord (XS→5XL), puis numériques, puis autres."""
+    if taille in _TAILLE_RANG:
+        return (0, _TAILLE_RANG[taille], '')
+    if taille.isdigit():
+        return (1, int(taille), '')
+    return (2, 0, taille)
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CATÉGORIE
@@ -404,12 +436,24 @@ class SiteProductSerializer(serializers.ModelSerializer):
 
     def get_sizes(self, obj):
         """
-        Retourne la liste ordonnée des tailles disponibles,
-        en dédoublonnant tout en préservant l'ordre d'apparition.
+        Retourne les tailles disponibles, dédoublonnées et triées dans l'ordre logique
+        (XS → S → M → L → XL → 2XL → 3XL → 4XL).
+
+        Le champ size d'une variante peut contenir "TAILLE", "TAILLE / COULEUR" ou
+        "COULEUR / TAILLE" selon comment l'utilisateur a saisi la variante dans l'app
+        de gestion. _extraire_taille() identifie la taille dans chaque segment,
+        puis _rang_taille() trie dans l'ordre standard.
         """
-        tailles = [v.size for v in obj.variants.all() if v.is_active and v.size]
         deja_vus = set()
-        return [t for t in tailles if not (t in deja_vus or deja_vus.add(t))]
+        tailles  = []
+        for v in obj.variants.all():
+            if not (v.is_active and v.size):
+                continue
+            taille = _extraire_taille(v.size)
+            if taille not in deja_vus:
+                deja_vus.add(taille)
+                tailles.append(taille)
+        return sorted(tailles, key=_rang_taille)
 
     def get_images(self, obj):
         """Retourne les URLs Cloudinary de la galerie, triées par ordre."""
