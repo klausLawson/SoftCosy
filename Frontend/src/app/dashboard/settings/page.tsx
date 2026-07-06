@@ -7,9 +7,9 @@ import { useTheme } from 'next-themes'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Moon, Sun, Bell, Lock, Palette, 
-  Settings as SettingsIcon, ShieldCheck, 
+import {
+  Moon, Sun, Bell, Palette,
+  Settings as SettingsIcon, ShieldCheck,
   RefreshCw, CheckCircle2, AlertTriangle, Info
 } from 'lucide-react'
 import api from '@/lib/api'
@@ -60,14 +60,19 @@ export default function SettingsPage() {
     }
   }, [systemSettings])
 
-  // 2. Récupération des dernières alertes de stock réelles
-  const { data: alerts = [] } = useQuery({
-    queryKey: ['alerts'],
-    queryFn: async () => {
-      const res = await api.get('/alerts/')
-      return res.data.results || res.data
-    }
+  // 2. Alertes de stock calculées dynamiquement (sans DB)
+  const [seenAlertIds, setSeenAlertIds] = useState<Set<number>>(new Set())
+
+  const { data: recentData } = useQuery({
+    queryKey: ['dashboard-recent'],
+    queryFn: async () => (await api.get('/dashboard/recent_data/')).data,
   })
+  const allAlerts: Array<{ id: number; titre: string; message: string; severite: string }> = recentData?.low_stock || []
+  const alerts = allAlerts.filter(a => !seenAlertIds.has(a.id))
+
+  const dismissAlert = (id: number) => {
+    setSeenAlertIds(prev => new Set([...prev, id]))
+  }
 
   // 3. Mutation pour sauvegarder les réglages système
   const updateSettingsMutation = useMutation({
@@ -295,22 +300,24 @@ export default function SettingsPage() {
                         </div>
                     ) : (
                         alerts.map((alert: any) => (
-                          <div key={alert.id} className={`group/alert p-5 rounded-[1.75rem] flex gap-4 transition-all hover:translate-x-1 ${
-                             alert.severite === 'critical' ? 'bg-red-50/50 dark:bg-red-950/10 border-l-[6px] border-red-500' : 
-                             alert.severite === 'warning' ? 'bg-orange-50/50 dark:bg-orange-950/10 border-l-[6px] border-orange-500' : 
-                             'bg-indigo-50/50 dark:bg-indigo-950/10 border-l-[6px] border-indigo-500'
-                          }`}>
+                          <div
+                            key={alert.id}
+                            onClick={() => dismissAlert(alert.id)}
+                            className={`group/alert p-5 rounded-[1.75rem] flex gap-4 transition-all hover:translate-x-1 cursor-pointer hover:opacity-70 ${
+                               alert.severite === 'critical' ? 'bg-red-50/50 dark:bg-red-950/10 border-l-[6px] border-red-500' :
+                               alert.severite === 'warning' ? 'bg-orange-50/50 dark:bg-orange-950/10 border-l-[6px] border-orange-500' :
+                               'bg-indigo-50/50 dark:bg-indigo-950/10 border-l-[6px] border-indigo-500'
+                            }`}
+                          >
                             <div className="shrink-0 mt-1">
                                 {alert.severite === 'critical' ? <AlertTriangle className="w-5 h-5 text-red-500 animate-bounce-slow" /> : <Bell className={`w-5 h-5 ${alert.severite === 'warning' ? 'text-orange-500' : 'text-indigo-500'}`} />}
                             </div>
-                            <div className="space-y-1.5 min-w-0">
+                            <div className="space-y-1.5 min-w-0 flex-1">
                                 <p className="text-sm font-black tracking-tight leading-none group-hover/alert:text-primary transition-colors truncate">{alert.titre}</p>
                                 <p className="text-[11px] text-muted-foreground font-semibold leading-relaxed line-clamp-2">{alert.message}</p>
                                 <div className="pt-2 flex items-center justify-between">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">
-                                        {new Date(alert.dateAlerte).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} • {new Date(alert.dateAlerte).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                    {alert.estLue && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Stock en temps réel</span>
+                                    <span className="text-[9px] text-slate-400 opacity-0 group-hover/alert:opacity-100 transition-opacity">Cliquer pour fermer ×</span>
                                 </div>
                             </div>
                           </div>

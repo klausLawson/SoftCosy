@@ -1,20 +1,18 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { 
-  FileText, 
-  Plus, 
-  Search, 
-  Filter, 
-  ChevronRight, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle,
+  FileText,
+  Plus,
+  Search,
+  Filter,
+  ChevronRight,
+  Clock,
+  CheckCircle2,
   Calendar,
   User,
-  MoreVertical,
   Activity,
   History
 } from 'lucide-react'
@@ -24,7 +22,6 @@ import api from '@/lib/api'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/components/AuthContext'
 
 interface InventoryCount {
@@ -82,7 +79,7 @@ export default function InventoryListPage() {
     }
   })
 
-  const filteredInventories = inventories.filter(inv => {
+  const filteredInventories = inventories.filter((inv: InventoryCount) => {
     const matchesSearch = inv.notes?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          inv.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          inv.id.toString().includes(searchTerm)
@@ -137,7 +134,7 @@ export default function InventoryListPage() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">En Cours</p>
-                      <p className="text-2xl font-black text-foreground">{inventories.filter(i => i.status === 'ENCOURS').length}</p>
+                      <p className="text-2xl font-black text-foreground">{inventories.filter((i: InventoryCount) => i.status === 'ENCOURS').length}</p>
                     </div>
                  </Card>
                  <Card className="p-6 border-border/50 shadow-sm bg-card hover:border-green-500/30 transition-all flex items-center gap-4">
@@ -146,7 +143,7 @@ export default function InventoryListPage() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Terminés</p>
-                      <p className="text-2xl font-black text-foreground">{inventories.filter(i => i.status === 'FINI').length}</p>
+                      <p className="text-2xl font-black text-foreground">{inventories.filter((i: InventoryCount) => i.status === 'FINI').length}</p>
                     </div>
                  </Card>
                </>
@@ -200,7 +197,7 @@ export default function InventoryListPage() {
                </Card>
             ) : (
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {filteredInventories.map((inventory) => (
+                 {filteredInventories.map((inventory: InventoryCount) => (
                    <Card 
                      key={inventory.id} 
                      className="group hover:border-primary/50 transition-all cursor-pointer overflow-hidden border-border/50 shadow-sm relative bg-card"

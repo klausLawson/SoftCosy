@@ -5,9 +5,10 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Ne pas définir Content-Type ici :
+  // - Pour les objets JSON, Axios le définit automatiquement à 'application/json'
+  // - Pour FormData (upload fichier), le browser définit 'multipart/form-data; boundary=...'
+  // Forcer 'application/json' globalement empêche les uploads multipart de fonctionner
 });
 
 // Ajoute automatiquement le token dans les headers si présent

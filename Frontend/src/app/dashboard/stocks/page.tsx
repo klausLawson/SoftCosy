@@ -2,15 +2,14 @@
 
 import React, { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { 
-  Plus, 
-  TrendingDown, 
-  TrendingUp, 
-  AlertTriangle, 
-  Package, 
-  Filter, 
-  Search, 
-  Activity, 
+import {
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  AlertTriangle,
+  Package,
+  Search,
+  Activity,
   FileText,
   Calendar,
   Edit2,
@@ -19,8 +18,6 @@ import {
   ChevronDown,
   ChevronUp,
   Layers,
-  Tag,
-  Info
 } from 'lucide-react'
 import api from '@/lib/api'
 
@@ -35,7 +32,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/components/AuthContext'
 
 // Custom Components
 import AddMovementModal from '@/components/add-movement-modal'
@@ -56,13 +52,6 @@ interface StockMovement {
   user?: string
 }
 
-interface Alert {
-  id: number
-  severite: 'info' | 'warning' | 'critical'
-  message: string
-  titre: string
-}
-
 interface ProductGroup {
   product_id: number
   product_name: string
@@ -80,7 +69,6 @@ function computeProductStock(movements: StockMovement[]): number {
 
 export default function StocksPage() {
   const queryClient = useQueryClient()
-  const { user } = useAuth()
 
   // ── States ────────────────────────────────────
   const [isAddMovementOpen, setIsAddMovementOpen] = useState(false)
@@ -126,14 +114,6 @@ export default function StocksPage() {
     }
   })
 
-  const { data: alerts = [], isLoading: alertsLoading } = useQuery<Alert[]>({
-    queryKey: ['alerts'],
-    queryFn: async () => {
-      const res = await api.get('/alerts/')
-      return res.data.results || res.data
-    }
-  })
-
   // ── Grouper les mouvements par produit ─────────────────────────────────
   const productGroups = useMemo((): ProductGroup[] => {
     const groupMap = new Map<number, ProductGroup>()
@@ -173,7 +153,7 @@ export default function StocksPage() {
   const stats = useMemo(() => {
     const totalQty = stocks.reduce((sum: number, s: any) => sum + (s.on_hand_qty || 0), 0)
     const lowStockItems = stocks.filter((s: any) => s.on_hand_qty < 10).length
-    const criticalItems = alerts.filter(a => a.severite === 'critical').length
+    const criticalItems = stocks.filter((s: any) => s.available_qty <= 5).length
     const todayMovements = movements.filter(m =>
       new Date(m.date).toDateString() === new Date().toDateString()
     ).length
@@ -184,7 +164,7 @@ export default function StocksPage() {
       { label: 'Alertes Critiques', value: criticalItems, icon: Activity, color: 'text-red-500', bg: 'bg-red-500/10' },
       { label: 'Mouvements (Auj.)', value: todayMovements, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     ]
-  }, [stocks, alerts, movements])
+  }, [stocks, movements])
 
   const isLoading = stocksLoading || movementsLoading
 
@@ -270,9 +250,6 @@ export default function StocksPage() {
                   <option value="SORTIE">Sorties</option>
                   <option value="AJUSTEMENT">Ajustements</option>
                 </select>
-                <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border-border/50">
-                  <Filter className="w-4 h-4" />
-                </Button>
               </div>
             </div>
           </Card>
@@ -325,12 +302,7 @@ export default function StocksPage() {
                                <div className="w-10 h-10 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0">
                                  <Package className="w-5 h-5 text-primary/50" />
                                </div>
-                               <div>
-                                 <div className="font-bold text-foreground text-sm">{group.product_name}</div>
-                                 <div className="text-[10px] text-muted-foreground font-mono mt-0.5 uppercase tracking-tighter">
-                                   {group.movements.filter(m => m.variant_sku).map(m => m.variant_sku).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3).join(' · ') || 'Sans variante'}
-                                 </div>
-                               </div>
+                               <div className="font-bold text-foreground text-sm">{group.product_name}</div>
                              </div>
                            </td>
                            <td className="p-4 text-center">

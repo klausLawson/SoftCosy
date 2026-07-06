@@ -292,7 +292,7 @@ export default function ReportsPage() {
                           />
                           <Tooltip 
                             contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', fontWeight: 'bold' }}
-                            formatter={(value: number) => [`${value.toLocaleString()} FCFA`, 'Ventes']}
+                            formatter={(value: number | undefined) => [`${(value ?? 0).toLocaleString()} FCFA`, 'Ventes']}
                           />
                           <Line 
                             type="monotone" 
@@ -332,7 +332,7 @@ export default function ReportsPage() {
                               <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="transparent" />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value: number) => `${value}%`} contentStyle={{ borderRadius: '15px' }} />
+                          <Tooltip formatter={(value: number | undefined) => `${value ?? 0}%`} contentStyle={{ borderRadius: '15px' }} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>

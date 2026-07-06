@@ -64,7 +64,7 @@ export default function PurchasesListPage() {
   })
 
   // Accès sécurisé aux données paginées
-  const purchases = useMemo(() => {
+  const purchases: Purchase[] = useMemo(() => {
     if (!purchasesData) return []
     return Array.isArray(purchasesData) ? purchasesData : (purchasesData.results || [])
   }, [purchasesData])

@@ -22,6 +22,12 @@ ENV/
 /staticfiles/
 db.sqlite3
 
+# Google Drive — fichiers sensibles
+google_drive_token.json
+oauth_client.json
+softcosy-*.json
+*-credentials.json
+
 # IDE
 .vscode/
 .idea/

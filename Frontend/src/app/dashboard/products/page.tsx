@@ -1,20 +1,19 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { 
-  Plus, 
-  Search, 
-  MoreHorizontal, 
-  Package, 
-  Layers, 
-  Trash2, 
-  Edit2, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Package,
+  Layers,
+  Trash2,
+  Edit2,
+  ChevronDown,
+  ChevronUp,
   Activity,
-  Filter,
   ArrowUpDown,
-  Info
+  Info,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
@@ -32,8 +31,36 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 // Custom Modals
-import AddEditProductModal, { Product, Variant } from '@/components/add-product-modal'
+import AddEditProductModal from '@/components/add-product-modal'
 import CategoryManagementModal from '@/components/category-management-modal'
+
+// Type des données reçues de l'API (image = string URL, pas File)
+interface APIVariant {
+  id: number
+  sku?: string
+  size?: string
+  selling_price: number
+  cost_price?: number
+  stock?: number
+  is_active: boolean
+}
+
+interface APIProduct {
+  id: number
+  name: string
+  code_produit?: string
+  description?: string
+  category?: { id: number; name: string }
+  total_stock?: number
+  variants: APIVariant[]
+  brand?: string
+  badge?: string
+  icon?: string
+  fabric?: string
+  is_published?: boolean
+  colors?: string[]
+  product_images?: Array<{ id: number; image_url: string; cloudinary_public_id: string; order: number }>
+}
 
 export default function ProductsPage() {
   const queryClient = useQueryClient()
@@ -43,7 +70,7 @@ export default function ProductsPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [productToEdit, setProductToEdit] = useState<Product | null>(null)
+  const [productToEdit, setProductToEdit] = useState<APIProduct | null>(null)
   const [page, setPage] = useState(1)
   const [hasNextPage, setHasNextPage] = useState(false)
   const [hasPrevPage, setHasPrevPage] = useState(false)
@@ -60,7 +87,7 @@ export default function ProductsPage() {
   })
 
   // Accès sécurisé aux données paginées
-  const products = useMemo(() => {
+  const products: APIProduct[] = useMemo(() => {
     if (!productsData) return []
     return Array.isArray(productsData) ? productsData : (productsData.results || [])
   }, [productsData])
@@ -86,13 +113,13 @@ export default function ProductsPage() {
   }, [products, searchTerm])
 
   // ── Helpers ──────────────────────────────────
-  const calculateTotalStock = (variants: Variant[]) => {
-    return variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+  const getMainPrice = (variants: APIVariant[]) => {
+    if (!variants || variants.length === 0) return 0
+    return variants[0].selling_price || 0
   }
 
-  const getMainPrice = (variants: Variant[]) => {
-    if (!variants || variants.length === 0) return 0
-    return variants[0].selling_price
+  const getImageUrl = (product: APIProduct): string | undefined => {
+    return product.product_images?.[0]?.image_url
   }
 
   // On ne bloque plus tout l'affichage
@@ -144,9 +171,6 @@ export default function ProductsPage() {
             />
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border-border/50">
-              <Filter className="w-4 h-4" />
-            </Button>
             <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border-border/50">
               <ArrowUpDown className="w-4 h-4" />
             </Button>
@@ -228,8 +252,8 @@ export default function ProductsPage() {
                         <td className="p-4">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/10 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
-                              {product.image || product.image_url ? (
-                                <img src={product.image || product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                              {getImageUrl(product) ? (
+                                <img src={getImageUrl(product)} alt={product.name} className="w-full h-full object-cover" />
                               ) : (
                                 <Package className="w-6 h-6 text-primary/40" />
                               )}
@@ -253,7 +277,7 @@ export default function ProductsPage() {
                           </span>
                         </td>
                         <td className="p-4">
-                          <div className="text-sm font-black text-foreground">{getMainPrice(product.variants).toLocaleString()} €</div>
+                          <div className="text-sm font-black text-foreground">{getMainPrice(product.variants).toLocaleString()} FCFA</div>
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-1.5">
@@ -265,9 +289,9 @@ export default function ProductsPage() {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => setProductToEdit(product)}
                               className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
                             >
@@ -284,7 +308,7 @@ export default function ProductsPage() {
                                   {expandedId === product.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                   {expandedId === product.id ? 'Masquer détails' : 'Voir détails'}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => { if(confirm('Supprimer ce produit ?')) deleteProductMutation.mutate(product.id!) }}
                                   className="text-destructive gap-2 focus:bg-destructive/5 focus:text-destructive cursor-pointer"
                                 >
@@ -320,7 +344,7 @@ export default function ProductsPage() {
                                     <tr key={v.id || i} className="hover:bg-muted/40 transition-colors">
                                       <td className="p-3 font-mono font-medium">{v.sku || 'N/A'}</td>
                                       <td className="p-3"><Badge variant="secondary" className="px-1.5 py-0 rounded text-[9px] font-bold">{v.size || 'Unique'}</Badge></td>
-                                      <td className="p-3 font-bold">{v.selling_price} €</td>
+                                      <td className="p-3 font-bold">{(v.selling_price || 0).toLocaleString()} FCFA</td>
                                       <td className="p-3 font-medium">{v.stock || 0}</td>
                                       <td className="p-3">
                                         <Badge className={`rounded-full text-[9px] h-4 ${v.is_active ? 'bg-green-100 text-green-700 hover:bg-green-100' : 'bg-muted text-muted-foreground hover:bg-muted'}`}>
@@ -352,8 +376,8 @@ export default function ProductsPage() {
                  <Card key={product.id} className="p-0 overflow-hidden border-border/50 bg-card rounded-2xl shadow-sm">
                    <div className="p-4 flex gap-4 border-b border-border/40">
                       <div className="w-16 h-16 rounded-xl bg-muted/30 border overflow-hidden flex items-center justify-center shrink-0">
-                        {product.image || product.image_url ? (
-                          <img src={product.image || product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                        {getImageUrl(product) ? (
+                          <img src={getImageUrl(product)} alt={product.name} className="w-full h-full object-cover" />
                         ) : (
                           <Package className="w-8 h-8 text-muted-foreground/30" />
                         )}
@@ -368,8 +392,10 @@ export default function ProductsPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setProductToEdit(product)} className="gap-2"><Edit2 className="w-4 h-4" /> Modifier</DropdownMenuItem>
-                                <DropdownMenuItem 
+                                <DropdownMenuItem onClick={() => setProductToEdit(product)} className="gap-2">
+                                  <Edit2 className="w-4 h-4" /> Modifier
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => { if(confirm('Supprimer ce produit ?')) deleteProductMutation.mutate(product.id!) }}
                                   className="text-destructive gap-2"
                                 >
@@ -389,7 +415,7 @@ export default function ProductsPage() {
                       </div>
                       <div>
                         <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.1em] mb-1">Prix (Dès)</p>
-                        <p className="text-sm font-black">{getMainPrice(product.variants)} €</p>
+                        <p className="text-sm font-black">{getMainPrice(product.variants).toLocaleString()} FCFA</p>
                       </div>
                    </div>
                    
@@ -410,7 +436,7 @@ export default function ProductsPage() {
                               <p className="text-xs font-bold text-foreground">{v.size || 'Unique'}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-black text-primary">{v.selling_price} €</p>
+                              <p className="text-sm font-black text-primary">{(v.selling_price || 0).toLocaleString()} FCFA</p>
                               <p className="text-[10px] font-bold text-muted-foreground">{v.stock || 0} en stock</p>
                             </div>
                           </div>
@@ -477,17 +503,18 @@ export default function ProductsPage() {
           setIsAddModalOpen(false)
           setProductToEdit(null)
         }}
-        productToEdit={productToEdit}
+        productToEdit={productToEdit as any}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['products'] })
           setProductToEdit(null)
         }}
       />
 
-      <CategoryManagementModal 
+      <CategoryManagementModal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
       />
+
     </main>
     </div>
   )

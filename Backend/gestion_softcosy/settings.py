@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'inventorycount',
     'sale',
     'purchase',
-    'audit.apps.AuditConfig',
     'stockmouvement',
     'dashboard',
     'django.contrib.admin',
@@ -56,9 +55,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
-    'axes',  # Ajout pour le verrouillage après tentatives échouées
-    'debug_toolbar',  # Ajout pour le debug toolbar
-]
+    'axes',
+] + (['debug_toolbar'] if DEBUG else [])
 
 # Configuration django-axes : verrouillage après 3 tentatives échouées
 AXES_FAILURE_LIMIT = 3
@@ -81,45 +79,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'gestion_softcosy.pagination.FlexiblePagination',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-}
-
-# API Documentation (drf-spectacular)
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'SoftCosy API',
-    'DESCRIPTION': (
-        'REST API for SoftCosy — a sports inventory management system.\n\n'
-        '## Authentication\n'
-        'All endpoints (except `/api/token/`) require a token.\n'
-        'Obtain one via `POST /api/token/` then pass it as:\n'
-        '```\nAuthorization: Token <your_token>\n```\n\n'
-        '## Modules\n'
-        '- **Products** — categories, products, variants (SKU/barcode/pricing)\n'
-        '- **Stock** — on-hand quantities, movements, alerts\n'
-        '- **Sales** — customers, sales orders, sale lines\n'
-        '- **Purchases** — suppliers, purchase orders, purchase lines\n'
-        '- **Inventory counts** — physical counts and variance tracking\n'
-        '- **Audit** — immutable log of all create/update/delete actions\n'
-    ),
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'CONTACT': {'name': 'SoftCosy Team'},
-    'LICENSE': {'name': 'Proprietary'},
-    'ENUM_NAME_OVERRIDES': {
-        'SaleStatusEnum': ['PAYE', 'NONPAYE', 'PARTIEL'],
-        'InventoryCountStatusEnum': ['ENCOURS', 'FINI'],
-    },
-    'TAGS': [
-        {'name': 'auth', 'description': 'Authentication — obtain and manage tokens'},
-        {'name': 'users', 'description': 'User accounts and role management'},
-        {'name': 'products', 'description': 'Products, categories, and variants'},
-        {'name': 'stock', 'description': 'Stock levels, movements, and alerts'},
-        {'name': 'sales', 'description': 'Sales orders, customers, and sale lines'},
-        {'name': 'purchases', 'description': 'Purchase orders, suppliers, and purchase lines'},
-        {'name': 'inventory-counts', 'description': 'Physical inventory counts and variance tracking'},
-        {'name': 'audit', 'description': 'Audit log — read-only, admin only'},
-    ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
   
   'DEFAULT_THROTTLE_CLASSES': [
@@ -143,17 +104,17 @@ PASSWORD_HASHERS = [
 
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware (doit être avant CommonMiddleware)
-    'axes.middleware.AxesMiddleware',  # Ajout du middleware Axes
+    'corsheaders.middleware.CorsMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',  # Ajout du middleware Debug Toolbar
-]
+] + (['debug_toolbar.middleware.DebugToolbarMiddleware'] if DEBUG else [])
 
 ROOT_URLCONF = 'gestion_softcosy.urls'
 
@@ -227,18 +188,72 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Configuration CORS pour accepter les requêtes du frontend
+# STORAGES remplace DEFAULT_FILE_STORAGE et STATICFILES_STORAGE (supprimés en Django 5.1)
+# WhiteNoiseMiddleware gère compression + cache au démarrage du serveur,
+# StaticFilesStorage évite les erreurs de compression parallèle au build
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+}
+# Compat pour django-cloudinary-storage 0.3.0 qui accède encore à settings.STATICFILES_STORAGE
+STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
+
+# Configuration CORS — autorise les requêtes cross-origin depuis :
+# - le frontend de gestion (Next.js en local et sur Vercel)
+# - la vitrine du site web (Vercel)
+# - tout domaine supplémentaire défini dans CORS_ALLOWED_ORIGINS (variable d'env)
+_cors_extra = os.getenv('CORS_ALLOWED_ORIGINS', '')
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
-]
+    # Site vitrine Soft&Cozy (Vercel)
+    'https://siteweb-softcosy.vercel.app',
+    # Application de gestion SoftCosy (Vercel)
+    'https://soft-cosy.vercel.app',
+] + [o.strip() for o in _cors_extra.split(',') if o.strip()]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Media files configuration (Uploaded images)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# ── Stockage des fichiers média ───────────────────────────────────────────────
+# En production : Cloudinary
+# En développement : fichiers locaux
+_USE_CLOUDINARY = all([
+    os.getenv('CLOUDINARY_CLOUD_NAME'),
+    os.getenv('CLOUDINARY_API_KEY'),
+    os.getenv('CLOUDINARY_API_SECRET'),
+])
+
+if _USE_CLOUDINARY:
+    # cloudinary_storage doit être avant django.contrib.staticfiles
+    _sf_idx = next(
+        (i for i, app in enumerate(INSTALLED_APPS) if app == 'django.contrib.staticfiles'),
+        len(INSTALLED_APPS)
+    )
+    INSTALLED_APPS.insert(_sf_idx, 'cloudinary_storage')
+    INSTALLED_APPS.append('cloudinary')
+    # Django 4.2+ : utiliser STORAGES au lieu de DEFAULT_FILE_STORAGE
+    STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+        'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+        'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    }
+    MEDIA_URL = '/media/'
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ── Google Drive — Backup quotidien ───────────────────────────────────────────
+# Fichier client_secrets OAuth 2.0 (type "Application de bureau") téléchargé depuis Google Cloud
+GOOGLE_OAUTH_CLIENT_SECRETS_PATH = os.getenv('GOOGLE_OAUTH_CLIENT_SECRETS_PATH', '')
+# ID du dossier Google Drive où stocker les backups (copier depuis l'URL du dossier Drive)
+GOOGLE_DRIVE_PARENT_FOLDER_ID = os.getenv('GOOGLE_DRIVE_PARENT_FOLDER_ID', '')

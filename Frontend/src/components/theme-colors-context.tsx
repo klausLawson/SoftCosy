@@ -16,17 +16,17 @@ interface ThemeColorsContextType {
 const ThemeColorsContext = createContext<ThemeColorsContextType | undefined>(undefined)
 
 const COLOR_PRESETS = [
-  { name: 'Bleu Royal', primary: '#4f46e5', accent: '#f97316' },
-  { name: 'Émeraude', primary: '#059669', accent: '#f59e0b' },
-  { name: 'Améthyste', primary: '#7c3aed', accent: '#06b6d4' },
-  { name: 'Framboise', primary: '#db2777', accent: '#14b8a6' },
-  { name: 'Océan', primary: '#0ea5e9', accent: '#f43f5e' },
+  { name: 'Bleu Royal', primary: 'oklch(0.45 0.19 262.67)', accent: 'oklch(0.65 0.2 42.04)' },
+  { name: 'Émeraude', primary: 'oklch(0.52 0.18 162)', accent: 'oklch(0.72 0.17 85)' },
+  { name: 'Améthyste', primary: 'oklch(0.45 0.22 292)', accent: 'oklch(0.65 0.18 200)' },
+  { name: 'Framboise', primary: 'oklch(0.52 0.22 340)', accent: 'oklch(0.6 0.18 178)' },
+  { name: 'Océan', primary: 'oklch(0.6 0.2 220)', accent: 'oklch(0.6 0.22 10)' },
 ]
 
 export function ThemeColorsProvider({ children }: { children: ReactNode }) {
   const [colors, setColorsState] = useState<ThemeColors>({
-    primary: '#4f46e5',
-    accent: '#f97316',
+    primary: 'oklch(0.45 0.19 262.67)',
+    accent: 'oklch(0.65 0.2 42.04)',
   })
   const [mounted, setMounted] = useState(false)
 
