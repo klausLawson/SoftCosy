@@ -1,58 +1,76 @@
-// Page de connexion qui utilise le nouveau contexte
-// ────────────────────────────────────────────────
-
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/components/AuthContext';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
 
-export default function LoginPage() {
-  const { signIn } = useAuth();
+export default function AdminEntryPage() {
+  const { isAuthenticated, loading, signIn } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/admin/dashboard');
+    }
+  }, [isAuthenticated, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setSubmitting(true);
 
     try {
       await signIn(email, password);
-      router.push('/dashboard');
+      router.push('/admin/dashboard');
     } catch (err: any) {
       const resp = err.response;
       const data = resp?.data || {};
       const errorMsg = data.detail || data.message || (typeof data === 'string' ? data : '');
-      
+
       // Detection du lockout : soit via le status 403, soit via le detail "lockout"
-      const isLockout = 
-        resp?.status === 403 || 
-        data.detail === "lockout" ||
+      const isLockout =
+        resp?.status === 403 ||
+        data.detail === 'lockout' ||
         (typeof errorMsg === 'string' && (
-          errorMsg.toLowerCase().includes('too many') || 
+          errorMsg.toLowerCase().includes('too many') ||
           errorMsg.toLowerCase().includes('verrouillé')
         ));
 
       if (isLockout) {
-        setError("Trop de tentatives échouées, veuillez attendre 5 min pour vous reconnecter.");
+        setError('Trop de tentatives échouées, veuillez attendre 5 min pour vous reconnecter.');
       } else {
         const displayMsg = typeof errorMsg === 'string' && errorMsg ? errorMsg : 'Erreur lors de la connexion';
         setError(displayMsg);
       }
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-lg bg-primary mx-auto animate-pulse" />
+          <p className="text-foreground font-medium">Chargement de la session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted p-4">
@@ -79,7 +97,7 @@ export default function LoginPage() {
               <label className="text-sm font-medium">Mot de passe</label>
               <div className="relative">
                 <Input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -95,8 +113,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Connexion en cours...' : 'Se connecter'}
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Connexion en cours...' : 'Se connecter'}
             </Button>
           </form>
         </CardContent>

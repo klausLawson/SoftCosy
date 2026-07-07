@@ -75,7 +75,7 @@ export default function InventoryListPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['inventory-counts'] })
-      router.push(`/dashboard/inventory/${data.id}`)
+      router.push(`/admin/dashboard/inventory/${data.id}`)
     }
   })
 
@@ -201,7 +201,7 @@ export default function InventoryListPage() {
                    <Card 
                      key={inventory.id} 
                      className="group hover:border-primary/50 transition-all cursor-pointer overflow-hidden border-border/50 shadow-sm relative bg-card"
-                     onClick={() => router.push(`/dashboard/inventory/${inventory.id}`)}
+                     onClick={() => router.push(`/admin/dashboard/inventory/${inventory.id}`)}
                    >
                      {/* Status Banner */}
                      <div className={`absolute top-0 right-0 px-4 py-1 rounded-bl-xl text-[10px] font-black uppercase tracking-wider ${

@@ -37,7 +37,7 @@ export const login = async (email: string, password: string): Promise<AuthUser> 
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
-  window.location.href = '/login';
+  window.location.href = '/admin';
 };
 
 // Récupère l'utilisateur connecté depuis localStorage (ou null)
