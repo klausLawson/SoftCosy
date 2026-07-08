@@ -665,6 +665,7 @@ interne (variantes, coûts d'achat...) au public. Retournent uniquement les prod
 ```python
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000', 'http://127.0.0.1:3000',
+
     'http://localhost:3001', 'http://127.0.0.1:3001',
     'https://softcosy.store', 'https://www.softcosy.store',
 ] + [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
@@ -910,7 +911,7 @@ bundler, sans dépendances npm — hérité tel quel de l'ancien projet indépen
 > propre serveur Express avec routes `/api/products`, `/api/upload`, etc.), la boutique n'a
 > désormais **aucun backend propre**. Elle ne fait que lire l'API publique Django
 > (`/api/site/products/`). La gestion du catalogue (créer/modifier un produit, uploader des
-> photos) se fait exclusivement depuis l'application de gestion, sous `/admin`.
+> photos) se fait exclusiv'ement depuis l'application de gestion, sous `/admin`.
 
 ### 4.4 Application de gestion — `/admin`
 
@@ -1387,14 +1388,58 @@ mises à jour système / rapport hebdomadaire — sauvegardé via `PATCH /api/se
 
 ## 8. Déploiement
 
-Le projet est réparti sur **deux plateformes** :
+> Cette section documente, pour référence future, l'ensemble des comptes, services externes et
+> réglages effectivement utilisés pour mettre SoftCosy en production (où le domaine a été
+> acheté, quels services hébergent quoi, quels réglages DNS ont été appliqués...).
+
+### 8.0 Récapitulatif des comptes et services externes
+
+| Besoin | Service utilisé | Détails |
+|---|---|---|
+| Nom de domaine | **Namecheap** | `softcosy.store`, acheté et géré ici (DNS via Namecheap BasicDNS) |
+| Hébergement backend (Django/API) | **Render** | Compte/workspace *cosy's workspace*, projet *SC projet*, service `softcosy-backend` |
+| Hébergement frontend (site + admin, unifiés) | **Vercel** | Compte personnel (plan Hobby), workspace affiché *doux et confortable*, projet `soft-cosy` |
+| Dépôt de code / CI de déploiement | **GitHub** | `lawsondjeckylaurenne/SoftCosy`, branche `master` — Render **et** Vercel sont tous les deux connectés à ce repo et redéploient automatiquement à chaque `git push` sur `master` |
+| Base de données PostgreSQL + stockage fichiers (S3) | **Supabase** | Voir [section 5](#5-base-de-données--postgresql--supabase) et [section 6](#6-stockage-des-images) |
+| Stockage des photos produits (galerie) | **Cloudinary** | Voir [section 6.2](#62-cloudinary--galerie-produits-boutique--application-de-gestion) |
+| Indexation moteur de recherche | **Google Search Console** | Propriété à créer pour `softcosy.store` (type "Domaine") — voir [8.5](#85-indexation--google-search-console) |
+
+Le projet est réparti sur **deux plateformes d'hébergement** :
 
 | Composant | Plateforme | Détails |
 |---|---|---|
 | Backend Django | **Render** | Service web `softcosy-backend`, config dans `render.yaml` |
 | Frontend Next.js (boutique + admin, unifiés) | **Vercel** | Projet connecté au repo GitHub, racine = `Frontend/` |
 
-### 8.1 Backend — Render (`render.yaml`)
+### 8.1 Nom de domaine — Namecheap
+
+Le domaine `softcosy.store` est acheté et géré chez **Namecheap** (Domain List → Manage →
+Advanced DNS). Le frontend étant sur Vercel, les enregistrements DNS suivants ont été ajoutés
+pour pointer le domaine vers Vercel :
+
+| Type | Hôte | Valeur | Rôle |
+|---|---|---|---|
+| A | `@` | `216.198.79.1` | Domaine racine (`softcosy.store`) → Vercel |
+| CNAME | `www` | `65730f572b73a2c0.vercel-dns-017.com.` | Sous-domaine `www.softcosy.store` → Vercel |
+
+> Ces valeurs sont **spécifiques à ce projet Vercel** (Vercel les affiche dans Domaines → nom du
+> domaine → "Enregistrements DNS" au moment de l'ajout du domaine). Si le domaine devait être
+> reconfiguré un jour, retourner sur Vercel → Settings → Domains pour récupérer les valeurs
+> exactes à jour plutôt que de réutiliser telles quelles celles ci-dessus.
+
+`softcosy.store` redirige (308) vers `www.softcosy.store`, qui est la version "Production" —
+choix par défaut de Vercel, aucune action supplémentaire nécessaire.
+
+**Propagation DNS** : entre l'ajout des enregistrements et la validation complète (Vercel →
+Domaines → statut "Valid Configuration" / "Configuration valide"), compter de quelques minutes
+à quelques heures.
+
+### 8.2 Backend — Render (`render.yaml`)
+
+Compte Render : workspace **cosy's workspace**, projet **SC projet**, environnement
+**production**, service web **`softcosy-backend`** (Service ID `srv-d7u5u5osfn5c73cnfhkg`),
+connecté au repo GitHub `lawsondjeckylaurenne/SoftCosy` (branche `master`, "Blueprint managed").
+URL : `https://softcosy-backend.onrender.com`.
 
 ```yaml
 services:
@@ -1412,44 +1457,83 @@ services:
         value: softcosy-backend.onrender.com,softcosy.store,www.softcosy.store
 ```
 
-**Variables d'environnement à configurer sur Render** (Dashboard → Service → Environment) :
+> **⚠️ Piège vécu en production** : modifier `render.yaml` dans le repo ne met **pas**
+> automatiquement à jour les variables d'environnement d'un service déjà existant sur Render
+> (le Blueprint n'est resynchronisé que dans certains cas). Après avoir ajouté `softcosy.store`
+> à `ALLOWED_HOSTS` dans `render.yaml`, il a fallu **aussi** l'ajouter manuellement dans
+> Render → `softcosy-backend` → **Environment** → variable `ALLOWED_HOSTS` → modifier la valeur
+> → **Save Changes** (déclenche un redéploiement automatique). Toujours vérifier la valeur
+> réellement active dans le dashboard Render après un changement de `render.yaml`.
 
-| Variable | Valeur | Description |
-|----------|--------|-------------|
-| `SECRET_KEY` | (générer aléatoirement) | Clé secrète Django |
-| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | (depuis Supabase) | Connexion PostgreSQL |
-| `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD`, `DEFAULT_ADMIN_FULL_NAME` | — | Premier compte admin |
-| `SUPABASE_S3_ENDPOINT`, `SUPABASE_ACCESS_KEY_ID`, `SUPABASE_SECRET_ACCESS_KEY`, `SUPABASE_BUCKET_NAME` | (depuis Supabase) | Storage S3 |
-| `CLOUDINARY_URL` | (depuis Cloudinary) | Photos produits |
+**Variables d'environnement configurées sur Render** (Dashboard → Service → Environment) :
+
+| Variable | Description |
+|----------|-------------|
+| `SECRET_KEY` | Clé secrète Django |
+| `ALLOWED_HOSTS` | `softcosy-backend.onrender.com,softcosy.store,www.softcosy.store` |
+| `CORS_ALLOWED_ORIGINS` | Origines additionnelles (le domaine `softcosy.store` est déjà autorisé en dur dans `settings.py`, cette variable est un complément, ex. `https://soft-cosy.vercel.app`) |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Connexion PostgreSQL (Supabase) |
+| `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD`, `DEFAULT_ADMIN_FULL_NAME` | Premier compte admin |
+| `SUPABASE_S3_ENDPOINT`, `SUPABASE_ACCESS_KEY_ID`, `SUPABASE_SECRET_ACCESS_KEY`, `SUPABASE_BUCKET_NAME` | Storage S3 (Supabase) |
+| `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_CLOUD_NAME` | Photos produits (Cloudinary) |
 
 **Points importants** :
 - `plan: free` est obligatoire pour éviter la demande de paiement
+- Le plan gratuit met le service en veille après inactivité — premier appel après veille : jusqu'à ~50s de délai (message affiché directement dans le dashboard Render)
 - `preDeployCommand` n'est pas supporté sur le plan gratuit (migrations incluses dans `buildCommand`)
 - Au démarrage de l'app Django, `AppConfig.ready()` crée le compte admin par défaut si aucun n'existe
+- Déploiement automatique à chaque `git push` sur `master` (visible dans Render → Events)
 
-### 8.2 Frontend — Vercel
+### 8.3 Frontend — Vercel
 
-Le frontend est déployé **manuellement configuré par l'utilisateur** sur Vercel (pas via
-`render.yaml` — l'ancien service Render `softcosy-frontend` a été retiré car inutilisé). Vercel
-détecte automatiquement Next.js (zero-config) : à chaque `git push` sur la branche connectée,
-Vercel rebuild et redéploie automatiquement.
+Compte Vercel : compte personnel (plan **Hobby**), workspace affiché **"doux et confortable"**
+(nom francisé de "Soft & Cozy"), projet **`soft-cosy`**, connecté au même repo GitHub
+`lawsondjeckylaurenne/SoftCosy` (racine `Frontend/`). Vercel détecte automatiquement Next.js
+(zero-config) : à chaque `git push` sur la branche connectée, Vercel rebuild et redéploie
+automatiquement. URL de secours (avant/à côté du domaine personnalisé) :
+`https://soft-cosy.vercel.app`.
 
-**Variables d'environnement à configurer sur Vercel** (Project → Settings → Environment Variables) :
+**Variables d'environnement configurées sur Vercel** (Project → Settings → Environment Variables) :
 
-| Variable | Valeur |
-|----------|--------|
-| `NEXT_PUBLIC_API_URL` | `https://softcosy-backend.onrender.com/api` |
+| Variable | Valeur | Environnements |
+|----------|--------|--------|
+| `NEXT_PUBLIC_API_URL` | `https://softcosy-backend.onrender.com/api` | Production, Preview |
 
-**Domaine personnalisé** : `softcosy.store` doit être attaché à ce projet Vercel (Project →
-Settings → Domains), avec les DNS du registrar pointés vers Vercel. Une fois fait :
-- `https://softcosy.store/` → boutique Soft&Cozy
-- `https://softcosy.store/admin` → connexion à l'application de gestion
+> Après toute modification d'une variable d'environnement sur Vercel, un **redéploiement manuel**
+> est nécessaire (Deployments → dernier déploiement → menu **⋯** → Redeploy) — Vercel ne
+> redéploie pas automatiquement juste parce qu'une variable a changé.
 
-### 8.3 Fichiers statiques
+**Domaine personnalisé** : `softcosy.store` et `www.softcosy.store` sont attachés à ce projet
+Vercel (Project → Settings → Domains). Voir [8.1](#81-nom-de-domaine--namecheap) pour les
+enregistrements DNS exacts. Une fois la configuration validée par Vercel :
+- `https://softcosy.store/` → redirige (308) vers `https://www.softcosy.store/` → boutique Soft&Cozy
+- `https://softcosy.store/admin` (ou `www.`) → connexion à l'application de gestion
+
+### 8.4 Fichiers statiques
 
 - **Django** : WhiteNoise sert `staticfiles/` avec compression gzip
 - **Next.js** : sert nativement `public/` (style.css, favicon.svg, robots.txt, sitemap.xml) et
   ses propres assets buildés
+
+### 8.5 Indexation — Google Search Console
+
+Pour que `softcosy.store` apparaisse dans les résultats de recherche Google (ce qui n'est pas
+automatique pour un domaine neuf, même une fois le site en ligne et fonctionnel) :
+
+1. [Google Search Console](https://search.google.com/search-console) → ajouter une propriété de
+   type **"Domaine"** avec `softcosy.store` (ce type couvre automatiquement `www.` et les deux
+   protocoles, contrairement au type "Préfixe d'URL")
+2. Vérifier la propriété via l'enregistrement **TXT** que Google fournit, à ajouter dans
+   Namecheap → Advanced DNS (même écran que pour les enregistrements A/CNAME de la [section 8.1](#81-nom-de-domaine--namecheap))
+3. Une fois vérifié, soumettre le sitemap : `https://softcosy.store/sitemap.xml`
+4. Utiliser **"Inspection d'URL"** sur `https://softcosy.store/` puis **"Demander une
+   indexation"** pour accélérer le premier passage du robot Google (sinon indexation naturelle
+   en quelques jours à quelques semaines)
+
+> Le tag `<meta name="google-site-verification" ...>` déjà présent dans `site/index.html`
+> correspond à l'**ancienne** propriété Search Console (liée à l'ancien domaine Vercel du site
+> avant fusion) — il ne vérifie pas automatiquement la nouvelle propriété `softcosy.store`,
+> d'où la nécessité de la vérification TXT ci-dessus.
 
 ---
 
