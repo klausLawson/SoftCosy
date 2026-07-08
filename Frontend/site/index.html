@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-site-verification" content="4w7Esh-YcK_tul1GbuuUARMCsT5Vn6rm3MbOiHoUvRQ" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Soft&amp;Cosy – Lomé, Togo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">SOFT<span>&amp;COSY</span></div>
+    
+    <div style="display:flex; align-items:center; gap:20px;">
+      <button class="cart-btn" onclick="openCart()">
+        <svg class="cart-icon-svg" viewBox="0 0 24 24">
+          <path
+            d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
+        </svg>
+        <span class="cart-btn-text">PANIER</span> <span class="cart-count" id="cartCount">0</span>
+      </button>
+      <img src="https://res.cloudinary.com/duwzn4i52/image/upload/q_auto/f_auto/v1781863938/WhatsApp_Image_2026-03-26_at_02.42.44_aueuls.jpg" class="nav-logo-img" alt="Logo">
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-tag"> Nouvelle Collection 2026 – Lomé, Togo</div>
+      <h1>DÉPASSE<br><em>TES LIMITES</em></h1>
+      <p>Vêtements de sport premium — Nike, Adidas, Under Armour. Livraison partout. Paiement Cash ou Mobile Money.</p>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="scrollToSection('all')">Commander Maintenant</button>
+        <button class="btn-outline" onclick="openCart()">Voir le Panier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS BAND -->
+  <div class="stats-band">
+    <div class="stat">
+      <div class="stat-number">50+</div>
+      <div class="stat-label">Produits</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">3</div>
+      <div class="stat-label">Top Marques</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">XS–4XL</div>
+      <div class="stat-label">Toutes Tailles</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">Rapide</div>
+      <div class="stat-label">Livraison</div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS SECTION -->
+  <div class="section" id="all">
+    <div class="section-header">
+      <div class="section-title">NOTRE <span>COLLECTION</span></div>
+      <div class="filters">
+        <button class="filter-btn active" onclick="filterProducts('all', this)">Tout</button>
+        <button class="filter-btn" onclick="filterProducts('hauts', this)">Hauts</button>
+        <button class="filter-btn" onclick="filterProducts('pantalons', this)">Pantalons</button>
+        <button class="filter-btn" onclick="filterProducts('ensembles', this)">Ensembles</button>
+        <button class="filter-btn" onclick="filterProducts('nike', this)">Nike</button>
+        <button class="filter-btn" onclick="filterProducts('adidas', this)">Adidas</button>
+        <button class="filter-btn" onclick="filterProducts('under armour', this)">Under Armour</button>
+      </div>
+    </div>
+    <div class="products-grid" id="productsGrid"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="logo">SOFT<span>&amp;COSY</span></div>
+    <p>LOMÉ, TOGO &nbsp;·&nbsp; VÊTEMENTS DE SPORT PREMIUM</p>
+    <div
+      style="margin-top:12px; display:flex; justify-content:center; gap:24px; font-size:11px; letter-spacing:1px; color:#666">
+      <span>LIVRAISON CASH</span>
+      <span>MOBILE MONEY (FLOOZ / T-MONEY)</span>
+    </div>
+    <p style="margin-top:20px;font-size:11px;opacity:0.5">© 2026 SOFT&amp;COSY LOMÉ. TOUS DROITS RÉSERVÉS.</p>
+    <p style="margin-top:20px;font-size:11px;opacity:0.5">Développé par <a href="https://laurenne-port-folio.vercel.app/">Virkas</a>
+    
+  </footer>
+
+  <!-- PRODUCT MODAL -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modal" style="position:relative">
+      <button class="modal-close" onclick="closeModalBtn()">✕</button>
+
+      <!-- GALLERY SIDE -->
+      <div class="modal-gallery-wrap">
+        <!-- Main image -->
+        <div class="gallery-main" id="galleryMain"></div>
+        <!-- Prev/Next arrows -->
+        <button class="gallery-arrow gallery-prev" onclick="galleryNav(-1)">&#8249;</button>
+        <button class="gallery-arrow gallery-next" onclick="galleryNav(1)">&#8250;</button>
+        <!-- Dot indicators -->
+        <div class="gallery-dots" id="galleryDots"></div>
+        <!-- Thumbnails strip -->
+        <div class="gallery-thumbs" id="galleryThumbs"></div>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-brand" id="modalBrand"></div>
+        <div class="modal-name" id="modalName"></div>
+        <div class="modal-price" id="modalPrice"></div>
+        <div class="modal-desc" id="modalDesc"></div>
+        <div class="modal-label">CHOISIR LA COULEUR</div>
+        <div class="color-options" id="colorOptions"></div>
+        <div class="modal-label">CHOISIR LA TAILLE</div>
+        <div class="size-options" id="sizeOptions"></div>
+        <div class="qty-row">
+          <div class="modal-label">QTÉ</div>
+          <div class="qty-ctrl">
+            <button onclick="changeQty(-1)">−</button>
+            <span id="qtyDisplay">1</span>
+            <button onclick="changeQty(1)">+</button>
+          </div>
+        </div>
+        <button class="btn-primary" style="width:100%;padding:18px;font-size:14px;letter-spacing:3px"
+          onclick="addToCartFromModal()">🛒 AJOUTER AU PANIER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CART BACKDROP -->
+  <div class="cart-backdrop" id="cartBackdrop" onclick="closeCart()"></div>
+
+  <!-- CART PANEL -->
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-header">
+      <div class="cart-title">VOTRE PANIER</div>
+      <button onclick="closeCart()"
+        style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer">✕</button>
+    </div>
+
+    <div class="cart-items-wrapper">
+      <div class="cart-items" id="cartItems"></div>
+
+      <div class="cart-footer">
+        <div id="cartSummary">
+          <div class="cart-total-row">
+            <div class="cart-total-label">Total</div>
+            <div class="cart-total-amount" id="cartTotal">0 FCFA</div>
+          </div>
+          <button class="checkout-btn" onclick="showOrderForm()">PASSER LA COMMANDE →</button>
+        </div>
+
+        <div class="order-form" id="orderForm">
+          <button class="back-btn" onclick="hideOrderForm()">← Retour au panier</button>
+          <div class="form-group">
+            <label>Nom complet *</label>
+            <input type="text" id="fname" placeholder="Votre nom complet" required>
+          </div>
+          <div class="form-group">
+            <label>Numéro de téléphone *</label>
+            <input type="tel" id="fphone" placeholder="Ex: 90 00 00 00" required>
+          </div>
+          <div class="form-group">
+            <label>Adresse de livraison *</label>
+            <textarea id="faddress" placeholder="Quartier, Ville, Pays" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Mode de paiement</label>
+            <select id="fpayment">
+              <option value="cash">Paiement à la livraison (Cash)</option>
+              <option value="mobile">Mobile Money (Flooz / T-Money)</option>
+            </select>
+          </div>
+          <div class="form-group" id="mobileMoneyInfo" style="display:none">
+            <label>Numéro Mobile Money</label>
+            <input type="tel" id="fmobilenumber" placeholder="Ex: 90 00 00 00">
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Flooz (Moov) ou T-Money (Togocel) acceptés</div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="fnotes" placeholder="Remarques particulières..."></textarea>
+          </div>
+          <button class="checkout-btn" onclick="submitOrder()">CONFIRMER LA COMMANDE</button>
+        </div>
+
+        <div class="order-success" id="orderSuccess">
+          <div class="check">✓</div>
+          <h3>COMMANDE ENVOYÉE !</h3>
+          <p>Votre commande a été envoyée sur WhatsApp. Nous vous contacterons rapidement pour confirmer la livraison à
+            Lomé.</p>
+          <button class="checkout-btn" style="margin-top:20px" onclick="resetAfterOrder()">CONTINUER LES ACHATS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+
+  <script>
+    // ============ CONFIG ============
+    // 🔧 REPLACE WITH YOUR WHATSAPP NUMBER (with country code, no + or spaces)
+    const WHATSAPP_NUMBER = '22892409878'; // ← Mets ton numéro ici ex: 22890123456
+
+    const API_PRODUITS_URL = 'https://softcosy-backend.onrender.com/api/site/products/?page_size=100';
+
+    function toFCFA(price) {
+      return (price || 0).toLocaleString('fr-FR') + ' FCFA';
+    }
+
+    function colorName(hex) {
+      if (!hex) return hex;
+      const h = hex.trim().toLowerCase();
+      const map = {
+        '#000000':'Noir','#0a0a0a':'Noir','#111111':'Noir','#1a1a1a':'Noir','#222222':'Noir',
+        '#333333':'Gris foncé','#444444':'Gris foncé','#555555':'Gris',
+        '#666666':'Gris','#777777':'Gris','#808080':'Gris','#888888':'Gris','#999999':'Gris',
+        '#a0a0a0':'Gris clair','#aaaaaa':'Gris clair','#bbbbbb':'Gris clair',
+        '#c0c0c0':'Argent','#cccccc':'Gris clair','#d3d3d3':'Gris clair',
+        '#dddddd':'Gris très clair','#e0e0e0':'Gris très clair',
+        '#f0f0f0':'Blanc cassé','#f5f5f5':'Blanc cassé','#fafafa':'Blanc','#ffffff':'Blanc',
+        '#000080':'Bleu marine','#00008b':'Bleu foncé','#191970':'Bleu nuit',
+        '#0000cd':'Bleu','#0000ff':'Bleu','#1e90ff':'Bleu','#4169e1':'Bleu royal',
+        '#6495ed':'Bleu clair','#87ceeb':'Bleu ciel','#add8e6':'Bleu ciel',
+        '#800000':'Bordeaux','#8b0000':'Rouge foncé','#990000':'Rouge foncé',
+        '#cc0000':'Rouge','#dc143c':'Cramoisi','#e63946':'Rouge','#ff0000':'Rouge',
+        '#ff4444':'Rouge','#ff6b6b':'Rouge clair',
+        '#006400':'Vert foncé','#008000':'Vert','#228b22':'Vert forêt',
+        '#32cd32':'Vert vif','#90ee90':'Vert clair',
+        '#ffd700':'Or','#ffa500':'Orange','#ff8c00':'Orange foncé',
+        '#ff7f50':'Corail','#ffff00':'Jaune',
+        '#800080':'Violet','#8b008b':'Violet foncé','#9370db':'Violet',
+        '#ee82ee':'Violet clair','#ff00ff':'Magenta',
+        '#ff1493':'Rose foncé','#ff69b4':'Rose vif','#ffc0cb':'Rose','#ffb6c1':'Rose clair',
+        '#8b4513':'Marron','#a0522d':'Marron','#d2691e':'Marron clair',
+        '#f5deb3':'Beige clair','#f5f5dc':'Beige','#deb887':'Beige foncé',
+        '#008080':'Bleu-vert','#40e0d0':'Turquoise','#00ced1':'Turquoise','#808000':'Olive',
+      };
+      if (map[h]) return map[h];
+      let full = h;
+      if (/^#[0-9a-f]{3}$/.test(h)) {
+        full = '#' + h[1]+h[1]+h[2]+h[2]+h[3]+h[3];
+        if (map[full]) return map[full];
+      }
+      if (!/^#[0-9a-f]{6}$/.test(full)) return hex;
+      const r = parseInt(full.slice(1,3),16), g = parseInt(full.slice(3,5),16), b = parseInt(full.slice(5,7),16);
+      const avg = (r+g+b)/3, range = Math.max(r,g,b)-Math.min(r,g,b);
+      if (avg < 40) return 'Noir';
+      if (avg > 220 && range < 25) return 'Blanc';
+      if (range < 35) return avg < 100 ? 'Gris foncé' : avg < 170 ? 'Gris' : 'Gris clair';
+      if (r >= g && r >= b) return g > 100 ? 'Orange' : avg < 130 ? 'Rouge foncé' : 'Rouge';
+      if (g > r && g >= b) return avg < 130 ? 'Vert foncé' : 'Vert';
+      return r > 100 ? 'Violet' : avg < 130 ? 'Bleu foncé' : 'Bleu';
+    }
+
+    // ============ DATA ============
+    let products = [];
+
+    // ============ STATE ============
+    let cart = [];
+    let currentProduct = null;
+    let selectedSize = null;
+    let selectedColor = null;
+    let qty = 1;
+    let activeFilter = 'all';
+
+    // ============ CARD GALLERY STATE ============
+    const cardGalleryIndex = {}; // productId -> currentIndex
+
+    function cardSlide(productId, delta, event) {
+      event.stopPropagation();
+      const p = products.find(x => x.id === productId);
+      const imgs = p.images.filter(Boolean);
+      if (imgs.length <= 1) return;
+      const total = imgs.length;
+      cardGalleryIndex[productId] = ((cardGalleryIndex[productId] || 0) + delta + total) % total;
+      updateCardGallery(productId);
+    }
+
+    function cardDotClick(productId, idx, event) {
+      event.stopPropagation();
+      cardGalleryIndex[productId] = idx;
+      updateCardGallery(productId);
+    }
+
+    function updateCardGallery(productId) {
+      const idx = cardGalleryIndex[productId] || 0;
+      const wrap = document.querySelector(`.card-img-wrap[data-id="${productId}"]`);
+      if (!wrap) return;
+      wrap.querySelectorAll('.card-slide').forEach((s, i) => {
+        s.classList.toggle('active', i === idx);
+      });
+      wrap.querySelectorAll('.card-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === idx);
+      });
+    }
+
+    // ============ RENDER PRODUCTS ============
+    function renderProducts(filter = 'all') {
+      const grid = document.getElementById('productsGrid');
+      const filtered = filter === 'all'
+        ? products
+        : products.filter(p => {
+            // Vérifier la catégorie (tableau de chaînes depuis Django)
+            if (p.category && p.category.some(c => c.toLowerCase().includes(filter.toLowerCase()))) return true;
+            // Vérifier la marque (champ séparé dans Django, était dans category dans Express)
+            if (p.brand && p.brand.toLowerCase().includes(filter.toLowerCase())) return true;
+            return false;
+          });
+      grid.innerHTML = filtered.map(p => {
+        const imgs = p.images.filter(Boolean);
+        const hasImgs = imgs.length > 0;
+        cardGalleryIndex[p.id] = 0;
+
+        // Build slides
+        let slidesHtml = '';
+        if (hasImgs) {
+          slidesHtml = imgs.map((url, i) => `
+        <div class="card-slide ${i === 0 ? 'active' : ''}">
+          <img src="${url}" alt="${p.name}" loading="lazy" crossorigin="anonymous" referrerpolicy="no-referrer" style="width:100%;height:260px;object-fit:cover">
+        </div>`).join('');
+        } else {
+          slidesHtml = `<div class="card-slide active">
+        <div class="product-img-placeholder" style="height:260px">
+          <div class="icon">${p.icon}</div>
+          <div class="sku">${p.sku}</div>
+        </div>
+      </div>`;
+        }
+
+        // Dots
+        const dotsHtml = hasImgs && imgs.length > 1
+          ? `<div class="card-dots">${imgs.map((_, i) => `<div class="card-dot ${i === 0 ? 'active' : ''}" onclick="cardDotClick(${p.id},${i},event)"></div>`).join('')}</div>`
+          : '';
+
+        // Arrows
+        const arrowsHtml = hasImgs && imgs.length > 1
+          ? `<div class="card-arrows">
+          <button class="card-btn" onclick="cardSlide(${p.id},-1,event)">&#8249;</button>
+          <button class="card-btn" onclick="cardSlide(${p.id},1,event)">&#8250;</button>
+        </div>`
+          : '';
+
+        // Count badge
+        const countBadge = hasImgs && imgs.length > 1
+          ? `<div class="img-count-badge">📷 ${imgs.length}</div>`
+          : '';
+
+        return `
+    <div class="product-card" onclick="openModal(${p.id})">
+      ${p.badge ? `<div class="product-badge">${p.badge}</div>` : ''}
+      <div class="card-img-wrap" data-id="${p.id}">
+        ${slidesHtml}
+        ${arrowsHtml}
+        ${dotsHtml}
+        ${countBadge}
+      </div>
+      <div class="product-info">
+        <div class="product-brand">${p.brand}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="color-swatches">
+          ${p.colors.map((c, i) => `<div class="swatch ${i === 0 ? 'active' : ''}" style="background:${c}"></div>`).join('')}
+        </div>
+        <div class="product-details">
+          <div class="product-price">${toFCFA(p.price)}</div>
+          <div class="product-meta">${p.fabric}<br>${p.sizes[0]}–${p.sizes[p.sizes.length - 1]}</div>
+        </div>
+        <button class="add-to-cart" onclick="event.stopPropagation();quickAdd(${p.id})">+ AJOUTER AU PANIER</button>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    function filterProducts(filter, btn) {
+      activeFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderProducts(filter);
+    }
+
+    function scrollToSection(filter) {
+      document.getElementById('all').scrollIntoView({ behavior: 'smooth' });
+      if (filter !== 'all') {
+        setTimeout(() => {
+          const btns = document.querySelectorAll('.filter-btn');
+          btns.forEach(b => { if (b.textContent.toLowerCase() === filter) b.click(); });
+        }, 500);
+      }
+    }
+
+    // ============ MODAL GALLERY STATE ============
+    let modalGalleryIndex = 0;
+    let modalGalleryImages = [];
+
+    function openModal(id) {
+      const p = products.find(x => x.id === id);
+      currentProduct = p;
+      modalGalleryProduct = p;
+      selectedSize = null;
+      selectedColor = null;
+      qty = 1;
+      modalGalleryIndex = 0;
+      document.getElementById('qtyDisplay').textContent = 1;
+
+      document.getElementById('modalBrand').textContent = p.brand;
+      document.getElementById('modalName').textContent = p.name;
+      document.getElementById('modalPrice').textContent = toFCFA(p.price);
+      document.getElementById('modalDesc').innerHTML = `<strong>Matière:</strong> ${p.fabric}<br><br>${p.desc}`;
+
+      const sizeOpts = document.getElementById('sizeOptions');
+      sizeOpts.innerHTML = p.sizes.map(s =>
+        `<button class="size-btn" onclick="selectSize(this,'${s}')">${s}</button>`
+      ).join('');
+
+      const colorOpts = document.getElementById('colorOptions');
+      colorOpts.innerHTML = p.colors.map(c => {
+        const cleanColor = c.trim();
+        return `<button class="color-btn" style="background:${cleanColor}" onclick="selectColor(this,'${cleanColor}')"></button>`;
+      }).join('');
+
+      // Setup gallery
+      modalGalleryImages = p.images.filter(Boolean);
+      buildModalGallery(p);
+
+      document.getElementById('modalOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function buildModalGallery(p) {
+      const imgs = p.images.filter(Boolean);
+      const hasImgs = imgs.length > 0;
+
+      // Main slides
+      const mainEl = document.getElementById('galleryMain');
+      if (hasImgs) {
+        mainEl.innerHTML = imgs.map((url, i) => `
+      <div class="gallery-slide ${i === 0 ? 'active' : ''}" id="gslide-${i}">
+        <img src="${url}" alt="${p.name} - photo ${i + 1}" crossorigin="anonymous" referrerpolicy="no-referrer">
+      </div>`).join('');
+      } else {
+        mainEl.innerHTML = `
+      <div class="gallery-slide active">
+        <div class="placeholder">
+          <div class="big-icon">${p.icon}</div>
+          <div class="slide-label">${p.sku} — Photo bientôt disponible</div>
+        </div>
+      </div>`;
+      }
+
+      // Dots
+      const dotsEl = document.getElementById('galleryDots');
+      dotsEl.innerHTML = hasImgs && imgs.length > 1
+        ? imgs.map((_, i) => `<div class="gallery-dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`).join('')
+        : '';
+
+      // Thumbnails
+      const thumbsEl = document.getElementById('galleryThumbs');
+      thumbsEl.innerHTML = hasImgs && imgs.length > 1
+        ? imgs.map((url, i) => `
+        <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})" id="gthumb-${i}">
+          <img src="${url}" alt="thumb ${i + 1}" loading="lazy">
+        </div>`).join('')
+        : '';
+
+      // Arrows visibility
+      const showArrows = hasImgs && imgs.length > 1;
+      document.querySelector('.gallery-prev').classList.toggle('hidden', !showArrows);
+      document.querySelector('.gallery-next').classList.toggle('hidden', !showArrows);
+
+      modalGalleryIndex = 0;
+    }
+
+    function galleryNav(delta) {
+      const total = modalGalleryImages.length;
+      if (total <= 1) return;
+      goToSlide((modalGalleryIndex + delta + total) % total);
+    }
+
+    function goToSlide(idx) {
+      const slides = document.querySelectorAll('#galleryMain .gallery-slide');
+      const dots = document.querySelectorAll('#galleryDots .gallery-dot');
+      const thumbs = document.querySelectorAll('#galleryThumbs .gallery-thumb');
+
+      slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      thumbs.forEach((t, i) => t.classList.toggle('active', i === idx));
+
+      // Scroll active thumb into view
+      const activeThumb = document.getElementById(`gthumb-${idx}`);
+      if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+      modalGalleryIndex = idx;
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('modalOverlay').classList.contains('open')) return;
+      if (e.key === 'ArrowLeft') galleryNav(-1);
+      if (e.key === 'ArrowRight') galleryNav(1);
+      if (e.key === 'Escape') closeModalBtn();
+    });
+
+    function selectSize(btn, size) {
+      document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedSize = size;
+    }
+
+    function selectColor(btn, color) {
+      document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedColor = color;
+    }
+
+    function changeQty(delta) {
+      qty = Math.max(1, qty + delta);
+      document.getElementById('qtyDisplay').textContent = qty;
+    }
+
+    function closeModal(event) {
+      if (event.target === document.getElementById('modalOverlay')) closeModalBtn();
+    }
+    function closeModalBtn() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function addToCartFromModal() {
+      if (!selectedSize) { showToast('Veuillez choisir une taille !'); return; }
+      if (!selectedColor) { showToast('Veuillez choisir une couleur !'); return; }
+      addToCart(currentProduct, selectedSize, selectedColor, qty);
+      closeModalBtn();
+    }
+
+    function quickAdd(id) {
+      const p = products.find(x => x.id === id);
+      addToCart(p, p.sizes[0], p.colors[0], 1);
+    }
+
+    // ============ CART ============
+    function addToCart(p, size, color, quantity) {
+      const key = `${p.id}-${size}-${color}`;
+      const existing = cart.find(i => i.key === key);
+      if (existing) {
+        existing.qty += quantity;
+      } else {
+        cart.push({ key, product: p, size, color, qty: quantity });
+      }
+      updateCartUI();
+      updateCartUI();
+      showToast(`${p.brand} ajouté au panier !`);
+    }
+
+    function updateCartUI() {
+      const totalAmount = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
+      const count = cart.reduce((s, i) => s + i.qty, 0);
+      document.getElementById('cartCount').textContent = count;
+      document.getElementById('cartTotal').textContent = toFCFA(totalAmount);
+
+      const itemsEl = document.getElementById('cartItems');
+      if (cart.length === 0) {
+        itemsEl.innerHTML = `
+      <div class="empty-cart">
+        <svg style="width:64px;height:64px;opacity:0.2;margin-bottom:16px" viewBox="0 0 24 24" fill="currentColor"><path d="M19,20C19,21.11 18.11,22 17,22C15.89,22 15,21.11 15,20C15,18.89 15.89,18 17,18C18.11,18 19,18.89 19,20M7,18C5.89,18 5,18.89 5,20C5,21.11 5.89,22 7,22C8.11,22 9,21.11 9,20C9,18.89 8.11,18 7,18M7.2,14.63L7.17,14.75C7.17,14.89 7.28,15 7.42,15H19V17H7C5.89,17 5,16.11 5,15C5,14.42 5.26,13.91 5.66,13.56L6.56,11.92L3,4H1V2H4.27L5.21,4H20C20.55,4 21,4.45 21,5C21,5.17 20.95,5.34 20.88,5.5L17.3,11.97C16.96,12.59 16.3,13 15.55,13H8.1L7.2,14.63Z"/></svg>
+        <p>Votre panier est vide.<br>Commencez vos achats !</p>
+      </div>`;
+      } else {
+        itemsEl.innerHTML = cart.map((item, idx) => {
+          const p = item.product;
+          const hasImg = p.images && p.images.length > 0;
+          return `
+      <div class="cart-item">
+        <div class="cart-item-img-container" style="width:80px;height:80px;flex-shrink:0;background:#111;overflow:hidden">
+          ${hasImg
+              ? `<img src="${p.images[0]}" alt="${p.name}" crossorigin="anonymous" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover">`
+              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;opacity:0.3">${p.icon}</div>`}
+        </div>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${p.name}</div>
+          <div class="cart-item-meta">
+            ${p.brand} · Taille ${item.size} · Qté ${item.qty}
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${item.color};border:1px solid #ddd;margin-left:4px;vertical-align:middle"></span>
+          </div>
+          <div class="cart-item-price">${toFCFA(p.price * item.qty)}</div>
+        </div>
+        <button class="cart-item-remove" onclick="removeItem(${idx})">
+          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19V4M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+        </button>
+      </div>`;
+        }).join('');
+      }
+    }
+
+    function removeItem(idx) {
+      cart.splice(idx, 1);
+      updateCartUI();
+    }
+
+    function openCart() {
+      document.getElementById('cartPanel').classList.add('open');
+      document.getElementById('cartBackdrop').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      hideOrderForm();
+      document.getElementById('orderSuccess').classList.remove('visible');
+      document.getElementById('cartSummary').style.display = '';
+    }
+
+    function closeCart() {
+      document.getElementById('cartPanel').classList.remove('open');
+      document.getElementById('cartBackdrop').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // ============ MOBILE MONEY TOGGLE ============
+    document.addEventListener('DOMContentLoaded', () => {
+      const paySelect = document.getElementById('fpayment');
+      if (paySelect) {
+        paySelect.addEventListener('change', () => {
+          document.getElementById('mobileMoneyInfo').style.display =
+            paySelect.value === 'mobile' ? 'block' : 'none';
+        });
+      }
+    });
+
+    // ============ ORDER FORM ============
+    function showOrderForm() {
+      if (cart.length === 0) { showToast('Votre panier est vide !'); return; }
+      document.getElementById('cartSummary').style.display = 'none';
+      document.getElementById('orderForm').classList.add('visible');
+    }
+
+    function hideOrderForm() {
+      document.getElementById('orderForm').classList.remove('visible');
+      document.getElementById('cartSummary').style.display = '';
+    }
+
+    function submitOrder() {
+      const name = document.getElementById('fname').value.trim();
+      const phone = document.getElementById('fphone').value.trim();
+      const address = document.getElementById('faddress').value.trim();
+      const payment = document.getElementById('fpayment').value;
+      const mobileNum = document.getElementById('fmobilenumber') ? document.getElementById('fmobilenumber').value.trim() : '';
+      const notes = document.getElementById('fnotes').value.trim();
+
+      if (!name || !phone || !address) {
+        showToast('Veuillez remplir les champs obligatoires !');
+        return;
+      }
+
+      const totalAmount = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
+      const orderNum = 'CMD-' + Date.now().toString().slice(-6);
+      const now = new Date().toLocaleString('fr-FR');
+
+      // Build order object
+      const order = {
+        id: orderNum,
+        date: now,
+        customer: { name, phone, address, payment, mobileNum, notes },
+        items: cart.map(i => ({
+          brand: i.product.brand,
+          name: i.product.name,
+          sku: i.product.sku,
+          size: i.size,
+          color: i.color,
+          qty: i.qty,
+          unitPrice: toFCFA(i.product.price),
+          total: toFCFA(i.product.price * i.qty)
+        })),
+        totalFCFA: toFCFA(totalAmount),
+        status: 'Nouveau'
+      };
+
+
+      // Build WhatsApp message
+      const payLabel = payment === 'mobile'
+        ? `Mobile Money${mobileNum ? ' (' + mobileNum + ')' : ''}`
+        : `Cash a la livraison`;
+
+      const itemLines = cart.map((i, idx) => [
+        `Article ${idx + 1}:`,
+        `  Marque  : ${i.product.brand}`,
+        `  Nom     : ${i.product.name} (${i.product.sku})`,
+        `  Taille  : ${i.size}`,
+        `  Couleur : ${colorName(i.color)}`,
+        `  Qte     : ${i.qty}`,
+        `  Prix    : ${toFCFA(i.product.price * i.qty)}`,
+      ].join('\n')).join('\n\n');
+
+      const msg = [
+        `*--- NOUVELLE COMMANDE ---*`,
+        `*Soft&Cosy - Lome, Togo*`,
+        '',
+        `N: ${orderNum}`,
+        `Date: ${now}`,
+        '',
+        `*CLIENT*`,
+        `Nom: ${name}`,
+        `Tel: ${phone}`,
+        `Adresse: ${address}`,
+        ...(notes ? [`Notes: ${notes}`] : []),
+        '',
+        `*ARTICLES*`,
+        itemLines,
+        '',
+        `*TOTAL: ${toFCFA(totalAmount)}*`,
+        `Paiement: ${payLabel}`,
+        `Livraison: Lome, Togo`,
+      ].join('\n');
+
+      const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+
+      // Open WhatsApp
+      window.open(waUrl, '_blank');
+
+      // Show success
+      document.getElementById('orderForm').classList.remove('visible');
+      document.getElementById('cartSummary').style.display = 'none';
+      document.getElementById('orderSuccess').classList.add('visible');
+
+      cart = [];
+      updateCartUI();
+    }
+
+    function resetAfterOrder() {
+      closeCart();
+      document.getElementById('orderSuccess').classList.remove('visible');
+    }
+
+
+    // ============ TOAST ============
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ============ INIT ============
+    async function loadAndRender() {
+      try {
+        const res = await fetch(API_PRODUITS_URL);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        // L'API Django retourne un objet paginé { count, next, previous, results: [...] }
+        const rawProducts = Array.isArray(data) ? data : (data.results || []);
+        products = rawProducts.map(p => ({
+          ...p,
+          desc: p.description || p.desc || '',
+          icon: p.icon || '👕',
+          badge: p.badge || '',
+          // Django retourne déjà des tableaux — Array.isArray() gère les deux formats
+          category: Array.isArray(p.category) ? p.category : JSON.parse(p.category || '[]'),
+          sizes:    Array.isArray(p.sizes)    ? p.sizes    : JSON.parse(p.sizes    || '[]'),
+          colors:   Array.isArray(p.colors)   ? p.colors   : JSON.parse(p.colors   || '[]'),
+          images:   Array.isArray(p.images)   ? p.images   : JSON.parse(p.images   || '[]'),
+        }));
+        renderProducts();
+      } catch (err) {
+        console.error('Erreur chargement produits:', err);
+        document.getElementById('productsGrid').innerHTML =
+          '<p style="text-align:center;padding:60px 20px;color:#888;font-size:16px">Impossible de charger les produits. Veuillez réessayer.</p>';
+      }
+    }
+    loadAndRender();
+    updateCartUI();
+  </script>
+</body>
+
+</html>

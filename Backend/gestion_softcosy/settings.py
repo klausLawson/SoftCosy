@@ -215,10 +215,13 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
-    # Site vitrine Soft&Cozy (Vercel)
+    # Site vitrine Soft&Cozy (ancien déploiement Vercel, conservé pendant la transition)
     'https://siteweb-softcosy.vercel.app',
-    # Application de gestion SoftCosy (Vercel)
+    # Application de gestion SoftCosy (ancien déploiement Vercel, conservé pendant la transition)
     'https://soft-cosy.vercel.app',
+    # Domaine unifié softcosy.store — sert à la fois la vitrine ('/') et l'app ('/admin')
+    'https://softcosy.store',
+    'https://www.softcosy.store',
 ] + [o.strip() for o in _cors_extra.split(',') if o.strip()]
 
 CORS_ALLOW_CREDENTIALS = True

@@ -15,12 +15,12 @@ function ProtectedRoutes({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // Les routes publiques qui ne nécessitent pas d'authentification
-  const publicRoutes = ['/login', '/signup'];
+  const publicRoutes = ['/admin', '/signup'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {
     if (!loading && !isAuthenticated && !isPublicRoute) {
-      router.push('/login');
+      router.push('/admin');
     }
   }, [isAuthenticated, loading, isPublicRoute, router, pathname]);
 

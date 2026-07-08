@@ -19,17 +19,17 @@ interface SidebarProps {
 // Mapping entre IDs et routes
 // ────────────────────────────────────────────────
 const routeMap: Record<string, string> = {
-  'dashboard': '/dashboard',
-  'products': '/dashboard/products',
-  'stocks': '/dashboard/stocks',
-  'cashier': '/dashboard/cashier',
-  'sales': '/dashboard/sales',
-  'inventory': '/dashboard/inventory',
-  'suppliers': '/dashboard/suppliers',
-  'purchases': '/dashboard/purchases',
-  'reports': '/dashboard/reports',
-  'users': '/dashboard/users',
-  'settings': '/dashboard/settings',
+  'dashboard': '/admin/dashboard',
+  'products': '/admin/dashboard/products',
+  'stocks': '/admin/dashboard/stocks',
+  'cashier': '/admin/dashboard/cashier',
+  'sales': '/admin/dashboard/sales',
+  'inventory': '/admin/dashboard/inventory',
+  'suppliers': '/admin/dashboard/suppliers',
+  'purchases': '/admin/dashboard/purchases',
+  'reports': '/admin/dashboard/reports',
+  'users': '/admin/dashboard/users',
+  'settings': '/admin/dashboard/settings',
 }
 
 // ────────────────────────────────────────────────
@@ -177,7 +177,7 @@ export default function Sidebar({
             {visibleItems.map((item) => {
               const Icon = item.icon
               const route = routeMap[item.id]
-              const isActive = pathname === route || (route !== '/dashboard' && pathname.startsWith(route))
+              const isActive = pathname === route || (route !== '/admin/dashboard' && pathname.startsWith(route))
 
               return (
                 <Button

@@ -105,7 +105,7 @@ export default function PurchasesListPage() {
               </p>
             </div>
             <Button 
-              onClick={() => router.push('/dashboard/purchases/new')} 
+              onClick={() => router.push('/admin/dashboard/purchases/new')}
               className="rounded-xl px-6 h-12 shadow-lg shadow-primary/25 gap-2 font-bold transition-all hover:scale-[1.02] active:scale-95"
             >
               <Plus className="w-5 h-5" />
@@ -245,7 +245,7 @@ export default function PurchasesListPage() {
                                <Button 
                                  variant="ghost" 
                                  size="sm" 
-                                 onClick={() => router.push(`/dashboard/purchases/${p.id}`)}
+                                 onClick={() => router.push(`/admin/dashboard/purchases/${p.id}`)}
                                  className="text-primary font-bold gap-1 hover:bg-primary/10 rounded-lg"
                                >
                                  Détails

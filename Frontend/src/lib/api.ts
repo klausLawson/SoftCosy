@@ -30,8 +30,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       localStorage.removeItem('token');
       // Évite la boucle de redirection si on est déjà sur la page de login
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      if (window.location.pathname !== '/admin') {
+        window.location.href = '/admin';
       }
     }
     return Promise.reject(error);

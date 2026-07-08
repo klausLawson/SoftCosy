@@ -153,7 +153,7 @@ export default function PurchaseDetailPage() {
         queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
       }
       alert(isNew ? "Achat créé avec succès" : "Achat mis à jour avec succès")
-      if (isNew) router.push(`/dashboard/purchases/${res.data.id}`)
+      if (isNew) router.push(`/admin/dashboard/purchases/${res.data.id}`)
     },
     onError: (err: any) => {
       const msg = err.response?.data?.detail || JSON.stringify(err.response?.data) || "Erreur lors de la mise à jour"
@@ -227,7 +227,7 @@ export default function PurchaseDetailPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                 <Button type="button" variant="ghost" size="icon" onClick={() => router.push('/dashboard/purchases')} className="rounded-full">
+                 <Button type="button" variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard/purchases')} className="rounded-full">
                     <ArrowLeft className="w-5 h-5" />
                  </Button>
                  <div>
